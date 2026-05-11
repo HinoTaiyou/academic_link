@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Academic Link (Next.js 16 + Supabase)
 
-## Getting Started
+旧 `app.py` (Streamlit) の Web 版リライト。
+**Next.js 16 (App Router) + React 19 + Tailwind CSS v4 + shadcn/ui + Supabase Auth** で構築。
 
-First, run the development server:
+## 現状
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- メールアドレス + パスワードでの **新規登録 / ログイン / ログアウト** が動作
+- 認証必須の `/dashboard` プレースホルダあり
+- 未ログインで保護ページに来たら `/login` にリダイレクト
+- ログイン済みで `/login` `/signup` に来たら `/dashboard` にリダイレクト
+
+## ディレクトリ
+
+```
+src/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx              # 起点: ログイン状態に応じて /dashboard か /login へ
+│   ├── login/page.tsx
+│   ├── signup/page.tsx
+│   ├── dashboard/page.tsx    # 認証必須 (server-side check)
+│   └── auth/callback/route.ts # Supabase メール確認の戻り先
+├── components/
+│   ├── auth/auth-form.tsx    # ログイン / 新規登録共用フォーム
+│   └── ui/                   # shadcn/ui
+├── lib/
+│   ├── auth/actions.ts       # loginAction / signupAction / logoutAction
+│   ├── supabase/client.ts    # ブラウザ向けクライアント
+│   ├── supabase/server.ts    # Server Components / Actions 向け
+│   └── supabase/middleware.ts# updateSession (毎リクエストでトークン更新)
+└── proxy.ts                  # Next 16 の proxy convention (旧 middleware.ts) で updateSession を呼ぶ
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## セットアップ手順
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Supabase の DB スキーマを流す（初回のみ）
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+リポジトリのルートにある `../supabase/schema.sql` をそのまま使えます。
 
-## Learn More
+1. <https://app.supabase.com/> でプロジェクトを開く
+2. 左メニュー → **SQL Editor**
+3. `supabase/schema.sql` の中身を全部コピペして **Run**
 
-To learn more about Next.js, take a look at the following resources:
+これで以下が作られます:
+- `profiles` / `research_posts` / `research_updates` / `messages` テーブル
+- 全テーブルの **RLS ポリシー**
+- サインアップ時に `profiles` 行を自動生成する trigger
+- `updated_at` を自動更新する trigger
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. メール確認の挙動を選ぶ
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+開発中はオフが楽です:
+- Supabase ダッシュボード → **Authentication** → **Sign In / Providers** → **Email**
+- **Confirm email** を OFF にすると、登録した瞬間からログイン可能
 
-## Deploy on Vercel
+本番で ON に戻したい場合は、Authentication → URL Configuration の **Site URL** と **Redirect URLs** に
+`http://localhost:3000` と本番ドメイン、および `/auth/callback` を登録しておく。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. 環境変数
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`.env.local`（コミット禁止）にすでに値を入れてあります:
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+別プロジェクトに切り替えるときは `.env.example` を見ながら書き換えてください。
+
+### 4. 起動
+
+```bash
+npm install   # 既に実行済み
+npm run dev
+```
+
+→ <http://localhost:3000>
+
+## 動作確認手順
+
+1. <http://localhost:3000/> を開く（未ログインなら `/login` に飛ばされる）
+2. 「新規登録」リンクから `/signup` に行き、メールアドレスとパスワード（6 文字以上）で登録
+3. Confirm email が OFF ならそのまま `/dashboard` に着く
+4. 右下の「ログアウト」を押すと `/login` に戻る
+
+## このあと追加していくもの (旧 app.py の機能を順次移植)
+
+- `/profile` … プロフィール編集 (`profiles` テーブル)
+- `/research` … 研究投稿（PDF アップロード + Storage `research-pdfs` 連携）
+- `/network` … 研究者ネットワーク図
+- `/search` … キャンパス内検索
+- `/chat` … DM (`messages` テーブル + Realtime)
+
+## 詰まったときに見る場所
+
+- ログインに失敗する → ブラウザの DevTools Network タブで Supabase エンドポイントへの 4xx を確認
+- `Invalid login credentials` → メアド・パスワードの綴りか、メール確認 ON のままになっている
+- `getUser()` が常に null → `.env.local` を変えたあと `npm run dev` を **再起動**したか確認
