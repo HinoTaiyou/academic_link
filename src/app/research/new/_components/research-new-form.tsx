@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,26 +50,28 @@ export function ResearchNewForm({
     return projects[0]?.id ?? "";
   });
   const [newProjectName, setNewProjectName] = useState("");
-  const [pendingDraft, setPendingDraft] = useState<SavedDraft | null>(null);
+  const [dismissedDraftKey, setDismissedDraftKey] = useState<string | null>(null);
+  const hasAnalyzedDraft = "ok" in analyzeState && analyzeState.ok;
+  const currentDraftKey = hasAnalyzedDraft
+    ? [
+        analyzeState.projectId,
+        analyzeState.fileName ?? "",
+        analyzeState.rawText.slice(0, 80),
+      ].join("::")
+    : null;
 
-  useEffect(() => {
-    if ("ok" in analyzeState && analyzeState.ok) {
-      setPendingDraft({
-        draft: analyzeState.draft,
-        rawText: analyzeState.rawText,
-        fileName: analyzeState.fileName,
-        pdfPath: analyzeState.pdfPath,
-        projectId: analyzeState.projectId,
-        projectName: analyzeState.projectName,
-      });
-    }
-  }, [analyzeState]);
-
-  if (pendingDraft) {
+  if (hasAnalyzedDraft && currentDraftKey !== dismissedDraftKey) {
     return (
       <DraftEditor
-        initial={pendingDraft}
-        onCancel={() => setPendingDraft(null)}
+        initial={{
+          draft: analyzeState.draft,
+          rawText: analyzeState.rawText,
+          fileName: analyzeState.fileName,
+          pdfPath: analyzeState.pdfPath,
+          projectId: analyzeState.projectId,
+          projectName: analyzeState.projectName,
+        }}
+        onCancel={() => setDismissedDraftKey(currentDraftKey)}
       />
     );
   }

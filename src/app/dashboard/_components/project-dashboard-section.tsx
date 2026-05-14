@@ -41,9 +41,10 @@ export function ProjectDashboardSection({ items }: Props) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
-            <article
+            <Link
               key={item.id}
-              className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              href={`/research/new?projectId=${item.id}`}
+              className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#667eea]/30 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-2">
                 <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
@@ -86,16 +87,12 @@ export function ProjectDashboardSection({ items }: Props) {
                 <span>図表メモ {item.figureCount}件</span>
                 <span>{formatDate(item.updatedAt)}</span>
               </div>
-
               <div className="flex items-center justify-end">
-                <Link
-                  href={`/research/new?projectId=${item.id}`}
-                  className="text-xs font-medium text-[#667eea] hover:underline"
-                >
+                <span className="text-xs font-medium text-[#667eea]">
                   このプロジェクトに追加 →
-                </Link>
+                </span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       )}
