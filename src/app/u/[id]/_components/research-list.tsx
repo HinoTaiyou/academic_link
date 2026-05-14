@@ -1,4 +1,4 @@
-import { getResearchPdfSignedUrl } from "@/lib/research/actions";
+import { getResearchPdfSignedUrl } from "../_lib/actions";
 
 export type ResearchListItem = {
   id: string;

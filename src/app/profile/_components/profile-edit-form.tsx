@@ -14,7 +14,7 @@ import {
 import {
   updateProfileAction,
   type ProfileUpdateState,
-} from "@/lib/profile/actions";
+} from "../_lib/actions";
 
 type Props = {
   initialInterestTags: string[];

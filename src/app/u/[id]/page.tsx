@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { ProfileView } from "@/components/profile/profile-view";
+import { ProfileView } from "./_components/profile-view";
 import {
   ResearchList,
   type ResearchListItem,
-} from "@/components/research/research-list";
+} from "./_components/research-list";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {

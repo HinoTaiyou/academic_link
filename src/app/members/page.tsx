@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { MemberCard } from "@/components/members/member-card";
-import { TagFilterChips } from "@/components/members/tag-filter-chips";
+import { MemberCard } from "./_components/member-card";
+import { TagFilterChips } from "./_components/tag-filter-chips";
 import { dsProgrammingTags } from "@/lib/constants/profile";
 import {
   scoreMember,
   sortMembers,
   type MemberProfileRow,
-} from "@/lib/members/match";
+} from "./_lib/match";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {

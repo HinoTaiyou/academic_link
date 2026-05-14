@@ -10,8 +10,8 @@ import {
   saveResearchAction,
   type AnalyzeState,
   type SaveState,
-} from "@/lib/research/actions";
-import type { ResearchDraft } from "@/lib/research/gemini";
+} from "../_lib/actions";
+import type { ResearchDraft } from "../_lib/gemini";
 import { cn } from "@/lib/utils";
 
 type Mode = "pdf" | "text";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ScoredMember } from "@/lib/members/match";
+import type { ScoredMember } from "../_lib/match";
 
 type Props = {
   member: ScoredMember;

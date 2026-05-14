@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/components/auth/auth-shell";
-import { OnboardingForm } from "@/components/onboarding/onboarding-form";
+import { AuthShell } from "@/app/(auth)/_components/auth-shell";
+import { OnboardingForm } from "./_components/onboarding-form";
 import { createClient } from "@/lib/supabase/server";
 import { isOnboardingIncomplete } from "@/lib/profile/onboarding";
 

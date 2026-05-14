@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { AuthState } from "@/lib/auth/actions";
+import type { AuthState } from "../_lib/actions";
 
 type Mode = "login" | "signup";
 

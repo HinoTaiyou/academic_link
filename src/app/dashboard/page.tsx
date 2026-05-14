@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { NewsSection } from "@/components/news/news-section";
-import { getNewsForInterests, getPopularNews } from "@/lib/news";
+import { NewsSection } from "./_components/news-section";
+import { getNewsForInterests, getPopularNews } from "./_lib/news";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {

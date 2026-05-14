@@ -18,8 +18,8 @@ import {
   dsProgrammingTags,
   gradeOptions,
 } from "@/lib/constants/profile";
-import type { OnboardingState } from "@/lib/profile/actions";
-import { saveOnboardingAction } from "@/lib/profile/actions";
+import type { OnboardingState } from "../_lib/actions";
+import { saveOnboardingAction } from "../_lib/actions";
 import { TagPicker } from "@/components/profile/tag-picker";
 
 type Props = {

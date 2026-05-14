@@ -1,6 +1,6 @@
-import { AuthForm } from "@/components/auth/auth-form";
-import { AuthShell } from "@/components/auth/auth-shell";
-import { signupAction } from "@/lib/auth/actions";
+import { AuthForm } from "../_components/auth-form";
+import { AuthShell } from "../_components/auth-shell";
+import { signupAction } from "../_lib/actions";
 
 export const metadata = {
   title: "新規登録 | Academic Link",

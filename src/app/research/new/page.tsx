@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { ResearchNewForm } from "@/components/research/research-new-form";
+import { ResearchNewForm } from "./_components/research-new-form";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {

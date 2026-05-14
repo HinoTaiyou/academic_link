@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { ProfileEditForm } from "@/components/profile/profile-edit-form";
+import { ProfileEditForm } from "./_components/profile-edit-form";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {

@@ -140,19 +140,3 @@ export async function saveResearchAction(
   revalidatePath("/research/new");
   redirect(`/u/${user.id}`);
 }
-
-/**
- * 保存済みの PDF を一時的にダウンロード可能な URL に変換する。
- * Storage が private なので signed URL を発行する。
- */
-export async function getResearchPdfSignedUrl(
-  path: string,
-  expiresIn = 60 * 10,
-): Promise<string | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, expiresIn);
-  if (error || !data) return null;
-  return data.signedUrl;
-}

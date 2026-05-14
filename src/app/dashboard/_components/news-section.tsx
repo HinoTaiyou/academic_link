@@ -1,4 +1,4 @@
-import type { NewsItem } from "@/lib/news";
+import type { NewsItem } from "../_lib/news";
 import { NewsCard } from "./news-card";
 
 type Props = {
