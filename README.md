@@ -1,105 +1,144 @@
-# Academic Link (Next.js 16 + Supabase)
+# 🎓 Academic Link
 
-旧 `app.py` (Streamlit) の Web 版リライト。
-**Next.js 16 (App Router) + React 19 + Tailwind CSS v4 + shadcn/ui + Supabase Auth** で構築。
+研究者マッチング＆ナレッジ共有プラットフォーム。  
+自分の興味タグや論文をもとに、同じ分野の仲間を見つけられるゼミ内向け Web アプリです。
 
-## 現状
+**Tech Stack**: Next.js 16 (App Router) / React 19 / Tailwind CSS v4 / shadcn/ui / Supabase (Auth + DB + Storage) / Gemini AI
 
-- メールアドレス + パスワードでの **新規登録 / ログイン / ログアウト** が動作
-- **初回ログイン後**: `profiles` の「興味タグ」「研究分野」がどちらも空なら **`/onboarding`** でタグ選択（`app.py` の DS タグ一覧と同等）。保存後に `/dashboard` へ
-- 認証必須の `/dashboard` でアカウント情報とタグを表示
-- 未ログインで保護ページに来たら `/login` にリダイレクト
-- ログイン済みで `/login` `/signup` に来たら、オンボーディング未完了なら `/onboarding`、完了なら `/dashboard` にリダイレクト
+---
 
-## ディレクトリ
+## 機能一覧
+
+| 機能 | 説明 |
+|------|------|
+| 認証 | メール + パスワードでサインアップ / ログイン / ログアウト |
+| オンボーディング | 初回ログイン時に興味タグ・研究分野を選択 |
+| ニュース | 興味タグに基づく Google News の自動取得（誤爆防止つき） |
+| プロフィール | 公開ビュー `/u/[id]` + 編集 `/profile` |
+| メンバー検索 | 興味タグの共通数順に他のメンバーを一覧表示 |
+| 研究登録 | PDF or テキスト → Gemini AI が要約・タグ生成 → プロフィールに公開 |
+| サイドバー | レスポンシブ対応。PC は常時表示、モバイルはドロワー |
+
+---
+
+## セットアップ手順（初めての人向け）
+
+### 1. リポジトリをクローン
+
+```bash
+git clone https://github.com/HinoTaiyou/academic_link.git
+cd academic_link
+npm install
+```
+
+### 2. Supabase プロジェクトを用意
+
+1. <https://app.supabase.com/> でプロジェクトを開く（なければ新規作成）
+2. 左メニュー → **SQL Editor** → `supabase-schema.sql` の中身をコピペして **Run**
+3. **Storage** → **New bucket** → 名前 `research-pdfs`（Private / Public OFF）で作成
+4. 再度 **SQL Editor** で `supabase-schema.sql` 末尾の **Storage policies** セクションを実行
+
+これで以下が作られます:
+- `profiles` / `research_posts` / `research_updates` / `messages` テーブル
+- 全テーブルの RLS ポリシー
+- サインアップ時に `profiles` 行を自動生成する trigger
+- `research-pdfs` バケットの読み書きポリシー
+
+### 3. メール確認を OFF にする（開発中）
+
+- Supabase ダッシュボード → **Authentication** → **Sign In / Providers** → **Email**
+- **Confirm email** を **OFF**
+
+### 4. 環境変数を設定
+
+```bash
+cp .env.example .env.local
+```
+
+`.env.local` を開いて以下を埋める:
+
+| 変数 | 取得場所 |
+|------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 同上 → `anon` `public` key |
+| `GEMINI_API_KEY` | <https://aistudio.google.com/app/apikey> で発行 |
+
+### 5. 起動
+
+```bash
+npm run dev
+```
+
+→ <http://localhost:3000> を開く
+
+---
+
+## 動作確認
+
+1. `/signup` でアカウント作成
+2. 初回は `/onboarding` に飛ぶ → 興味タグを選んで保存
+3. `/dashboard` にニュースが表示される
+4. サイドバーから各機能にアクセス:
+   - **プロフィール**: 公開ビュー確認 + 編集
+   - **メンバー検索**: 他メンバーとの共通タグ数で並ぶ
+   - **研究を登録**: PDF アップロード → AI 要約 → 保存
+
+---
+
+## ディレクトリ構成
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx
-│   ├── page.tsx              # 起点: ログイン状態に応じて /dashboard か /login へ
-│   ├── login/page.tsx
-│   ├── signup/page.tsx
-│   ├── dashboard/page.tsx    # 認証必須 (server-side check)
-│   ├── onboarding/page.tsx   # 初回: 興味タグ・研究分野の選択
-│   └── auth/callback/route.ts # Supabase メール確認の戻り先
+│   ├── dashboard/       # ホーム（ニュース）
+│   ├── login/ signup/   # 認証
+│   ├── onboarding/      # 初回タグ設定
+│   ├── profile/         # プロフィール編集
+│   ├── u/[id]/          # 公開プロフィール + 研究一覧
+│   ├── members/         # メンバー検索
+│   └── research/new/    # 研究登録（AI 解析）
 ├── components/
-│   ├── auth/auth-form.tsx    # ログイン / 新規登録共用フォーム
-│   ├── onboarding/onboarding-form.tsx
-│   ├── profile/tag-picker.tsx
-│   └── ui/                   # shadcn/ui
+│   ├── layout/          # AppShell, AppSidebar
+│   ├── news/            # ニュースカード・セクション
+│   ├── members/         # メンバーカード・タグフィルター
+│   ├── profile/         # プロフィール表示・編集・タグピッカー
+│   ├── research/        # 研究フォーム・一覧
+│   └── ui/              # shadcn/ui (Button, Input, etc.)
 ├── lib/
-│   ├── constants/profile.ts  # DS タグ・学部・学年（app.py 相当）
-│   ├── auth/actions.ts       # loginAction / signupAction / logoutAction
-│   ├── profile/actions.ts    # saveOnboardingAction → profiles UPSERT
-│   ├── profile/onboarding.ts # オンボーディング完了判定
-│   ├── supabase/client.ts    # ブラウザ向けクライアント
-│   ├── supabase/server.ts    # Server Components / Actions 向け
-│   └── supabase/middleware.ts# updateSession + オンボーディングリダイレクト
-└── proxy.ts                  # Next 16 の proxy convention (旧 middleware.ts) で updateSession を呼ぶ
+│   ├── auth/            # Server Actions (login/signup/logout)
+│   ├── constants/       # タグ・学部・学年の定数
+│   ├── members/         # マッチングスコア計算
+│   ├── news/            # RSS取得・タグマッチング
+│   ├── profile/         # プロフィール保存 Actions
+│   ├── research/        # PDF抽出・Gemini要約・保存 Actions
+│   └── supabase/        # Supabase クライアント (server/client/middleware)
+└── proxy.ts             # Next 16 proxy convention
 ```
 
-## セットアップ手順
+---
 
-### 1. Supabase の DB スキーマを流す（初回のみ）
+## Vercel にデプロイ（任意）
 
-リポジトリのルートにある `../supabase/schema.sql` をそのまま使えます。
+1. <https://vercel.com> で Import → このリポジトリを選択
+2. **Root Directory**: `.`（デフォルトのまま）
+3. **Environment Variables** に `.env.local` と同じ3つを設定
+4. **Deploy**
+5. Supabase の Authentication → URL Configuration に Vercel のドメインを追加
 
-1. <https://app.supabase.com/> でプロジェクトを開く
-2. 左メニュー → **SQL Editor**
-3. `supabase/schema.sql` の中身を全部コピペして **Run**
+---
 
-これで以下が作られます:
-- `profiles` / `research_posts` / `research_updates` / `messages` テーブル
-- 全テーブルの **RLS ポリシー**
-- サインアップ時に `profiles` 行を自動生成する trigger
-- `updated_at` を自動更新する trigger
+## 困ったとき
 
-### 2. メール確認の挙動を選ぶ
+| 症状 | 対処 |
+|------|------|
+| ログインできない | `.env.local` を確認 → `npm run dev` 再起動 |
+| `profiles upsert` エラー | SQL Editor で `supabase-schema.sql` を再実行 |
+| PDF アップロード失敗 | Storage に `research-pdfs` バケットが存在するか確認 |
+| AI 解析が動かない | `GEMINI_API_KEY` が `.env.local` にあるか。dev を再起動したか |
+| サイドバーが出ない | ブラウザ幅 768px 以上で表示。狭いときは ≡ をタップ |
 
-開発中はオフが楽です:
-- Supabase ダッシュボード → **Authentication** → **Sign In / Providers** → **Email**
-- **Confirm email** を OFF にすると、登録した瞬間からログイン可能
+---
 
-本番で ON に戻したい場合は、Authentication → URL Configuration の **Site URL** と **Redirect URLs** に
-`http://localhost:3000` と本番ドメイン、および `/auth/callback` を登録しておく。
+## ライセンス
 
-### 3. 環境変数
-
-`.env.local`（コミット禁止）にすでに値を入れてあります:
-```
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-```
-別プロジェクトに切り替えるときは `.env.example` を見ながら書き換えてください。
-
-### 4. 起動
-
-```bash
-npm install   # 既に実行済み
-npm run dev
-```
-
-→ <http://localhost:3000>
-
-## 動作確認手順
-
-1. <http://localhost:3000/> を開く（未ログインなら `/login` に飛ばされる）
-2. 「新規登録」リンクから `/signup` に行き、メールアドレスとパスワード（6 文字以上）で登録
-3. Confirm email が OFF ならログイン後、**タグ未設定なら `/onboarding`** に誘導される
-4. 興味または研究のどちらかにタグを1つ以上選んで保存 → `/dashboard`
-5. 「ログアウト」で `/login` に戻る
-
-## このあと追加していくもの (旧 app.py の機能を順次移植)
-
-- `/profile` … プロフィール編集（オンボーディング後のタグ変更など。現状は初回のみ `/onboarding`）
-- `/research` … 研究投稿（PDF アップロード + Storage `research-pdfs` 連携）
-- `/network` … 研究者ネットワーク図
-- `/search` … キャンパス内検索
-- `/chat` … DM (`messages` テーブル + Realtime)
-
-## 詰まったときに見る場所
-
-- ログインに失敗する → ブラウザの DevTools Network タブで Supabase エンドポイントへの 4xx を確認
-- `Invalid login credentials` → メアド・パスワードの綴りか、メール確認 ON のままになっている
-- `getUser()` が常に null → `.env.local` を変えたあと `npm run dev` を **再起動**したか確認
+MIT
