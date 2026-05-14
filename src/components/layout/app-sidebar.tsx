@@ -12,7 +12,7 @@ export type SidebarProfile = {
   email: string | null;
 };
 
-type NavKey = "dashboard" | "profile" | "members" | "research";
+type NavKey = "dashboard" | "profile" | "members" | "research" | "chat";
 
 type Props = {
   profile: SidebarProfile;
@@ -107,7 +107,7 @@ export function AppSidebar({ profile, active, className }: Props) {
         >
           研究を登録
         </NavItem>
-        <NavItem icon="💬" disabled hint="準備中">
+        <NavItem href="/chat" icon="💬" active={active === "chat"}>
           チャット
         </NavItem>
       </nav>

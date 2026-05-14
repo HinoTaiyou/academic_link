@@ -242,3 +242,6 @@ to authenticated
 using (auth.uid() = from_id or auth.uid() = to_id)
 with check (auth.uid() = from_id or auth.uid() = to_id);
 
+-- Enable Realtime for messages (required for live chat)
+alter publication supabase_realtime add table public.messages;
+

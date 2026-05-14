@@ -78,14 +78,24 @@ export default async function UserProfilePage({ params }: Props) {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-xl font-bold text-slate-900">プロフィール</h1>
-            {isMe ? (
-              <Link
-                href="/profile"
-                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
-              >
-                編集する
-              </Link>
-            ) : null}
+            <div className="flex gap-2">
+              {!isMe ? (
+                <Link
+                  href={`/chat/${profile.id}`}
+                  className="rounded-md bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:shadow-md hover:brightness-110"
+                >
+                  💬 メッセージを送る
+                </Link>
+              ) : null}
+              {isMe ? (
+                <Link
+                  href="/profile"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
+                >
+                  編集する
+                </Link>
+              ) : null}
+            </div>
           </div>
 
           <ProfileView
