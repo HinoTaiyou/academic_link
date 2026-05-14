@@ -75,14 +75,13 @@ export default async function ChatRoomPage({ params }: Props) {
     >
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Chat header */}
-        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
           <Link
             href="/chat"
-            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            aria-label="会話一覧に戻る"
+            className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition"
           >
             <svg
-              className="h-5 w-5"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -94,6 +93,7 @@ export default async function ChatRoomPage({ params }: Props) {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
+            戻る
           </Link>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-sm font-bold text-white">
             {partnerName.slice(0, 1)}
