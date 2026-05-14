@@ -70,12 +70,7 @@ export async function signupAction(
     revalidatePath("/", "layout");
     redirect("/dashboard");
   }
-
-  return {
-    message:
-      "登録メールを送信しました。受信箱の確認リンクをクリックしてください。" +
-      "（Supabase で「Confirm email」を OFF にしている場合はそのままログインできます。）",
-  };
+  return { error: "ユーザー登録に失敗しました。不明なエラーが発生しました。" };
 }
 
 export async function logoutAction() {

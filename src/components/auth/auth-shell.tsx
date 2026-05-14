@@ -26,13 +26,6 @@ export function AuthShell({ children }: Props) {
           <h1 className="text-3xl font-black leading-tight tracking-wide drop-shadow-lg sm:text-5xl md:text-6xl">
             知の継承と技術マッチング
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-white/90 drop-shadow sm:text-base md:text-lg">
-            Academic Link は研究者のためのプラットフォームです。
-            <br className="hidden sm:inline" />
-            あなたの研究を共有し、同じ興味を持つ研究者とつながりましょう。
-            <br className="hidden md:inline" />
-            AI があなたの研究を分析し、最適なマッチングをサポートします。
-          </p>
         </div>
       </section>
 

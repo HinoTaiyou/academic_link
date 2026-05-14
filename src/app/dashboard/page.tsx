@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { logoutAction } from "@/lib/auth/actions";
+import { AppShell } from "@/components/layout/app-shell";
+import { NewsSection } from "@/components/news/news-section";
+import { getNewsForInterests, getPopularNews } from "@/lib/news";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "ダッシュボード | Academic Link",
+  title: "ホーム | Academic Link",
 };
 
 export default async function DashboardPage() {
@@ -18,38 +18,49 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("real_name, department, grade, interest_tags")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const interests = (profile?.interest_tags ?? []) as string[];
+
+  const [interestNews, popularNews] = await Promise.all([
+    getNewsForInterests(interests, 8),
+    getPopularNews(interests, 6),
+  ]);
+
   return (
-    <main className="flex min-h-screen items-start justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-6">
-      <Card className="w-full max-w-2xl shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl">ようこそ</CardTitle>
-        </CardHeader>
+    <AppShell
+      active="dashboard"
+      profile={{
+        id: user.id,
+        realName: profile?.real_name ?? null,
+        department: profile?.department ?? null,
+        grade: profile?.grade ?? null,
+        interestTags: interests,
+        email: user.email ?? null,
+      }}
+    >
+      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-10">
+        <NewsSection
+          title="💛 あなたの興味に基づくニュース"
+          description={
+            interests.length
+              ? `タグ: ${interests.join(" / ")}`
+              : "興味のあるタグを設定すると、関連ニュースがここに表示されます。"
+          }
+          emptyHint="関連するニュースがまだありません。タグを増やすと候補が広がります。"
+          items={interestNews}
+        />
 
-        <CardContent className="space-y-6">
-          <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
-            <dt className="font-medium text-muted-foreground">メールアドレス</dt>
-            <dd className="sm:col-span-2">{user.email ?? "(未設定)"}</dd>
-
-            <dt className="font-medium text-muted-foreground">User ID</dt>
-            <dd className="break-all font-mono text-xs sm:col-span-2">{user.id}</dd>
-
-            <dt className="font-medium text-muted-foreground">登録日時</dt>
-            <dd className="sm:col-span-2">
-              {new Date(user.created_at).toLocaleString("ja-JP")}
-            </dd>
-          </dl>
-
-          <p className="rounded-md border bg-slate-50 p-3 text-sm text-slate-600">
-            ログインに成功しました。次のステップで「プロフィール編集」「研究投稿」「メッセージ」などの画面を追加していきます。
-          </p>
-
-          <form action={logoutAction}>
-            <Button type="submit" variant="outline">
-              ログアウト
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
+        <NewsSection
+          title="🔥 データサイエンスの注目ニュース"
+          description="Google ニュース「テクノロジー」のヘッドラインから自動取得"
+          items={popularNews}
+        />
+      </div>
+    </AppShell>
   );
 }

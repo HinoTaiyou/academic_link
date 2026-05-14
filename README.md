@@ -6,9 +6,10 @@
 ## 現状
 
 - メールアドレス + パスワードでの **新規登録 / ログイン / ログアウト** が動作
-- 認証必須の `/dashboard` プレースホルダあり
+- **初回ログイン後**: `profiles` の「興味タグ」「研究分野」がどちらも空なら **`/onboarding`** でタグ選択（`app.py` の DS タグ一覧と同等）。保存後に `/dashboard` へ
+- 認証必須の `/dashboard` でアカウント情報とタグを表示
 - 未ログインで保護ページに来たら `/login` にリダイレクト
-- ログイン済みで `/login` `/signup` に来たら `/dashboard` にリダイレクト
+- ログイン済みで `/login` `/signup` に来たら、オンボーディング未完了なら `/onboarding`、完了なら `/dashboard` にリダイレクト
 
 ## ディレクトリ
 
@@ -20,15 +21,21 @@ src/
 │   ├── login/page.tsx
 │   ├── signup/page.tsx
 │   ├── dashboard/page.tsx    # 認証必須 (server-side check)
+│   ├── onboarding/page.tsx   # 初回: 興味タグ・研究分野の選択
 │   └── auth/callback/route.ts # Supabase メール確認の戻り先
 ├── components/
 │   ├── auth/auth-form.tsx    # ログイン / 新規登録共用フォーム
+│   ├── onboarding/onboarding-form.tsx
+│   ├── profile/tag-picker.tsx
 │   └── ui/                   # shadcn/ui
 ├── lib/
+│   ├── constants/profile.ts  # DS タグ・学部・学年（app.py 相当）
 │   ├── auth/actions.ts       # loginAction / signupAction / logoutAction
+│   ├── profile/actions.ts    # saveOnboardingAction → profiles UPSERT
+│   ├── profile/onboarding.ts # オンボーディング完了判定
 │   ├── supabase/client.ts    # ブラウザ向けクライアント
 │   ├── supabase/server.ts    # Server Components / Actions 向け
-│   └── supabase/middleware.ts# updateSession (毎リクエストでトークン更新)
+│   └── supabase/middleware.ts# updateSession + オンボーディングリダイレクト
 └── proxy.ts                  # Next 16 の proxy convention (旧 middleware.ts) で updateSession を呼ぶ
 ```
 
@@ -79,12 +86,13 @@ npm run dev
 
 1. <http://localhost:3000/> を開く（未ログインなら `/login` に飛ばされる）
 2. 「新規登録」リンクから `/signup` に行き、メールアドレスとパスワード（6 文字以上）で登録
-3. Confirm email が OFF ならそのまま `/dashboard` に着く
-4. 右下の「ログアウト」を押すと `/login` に戻る
+3. Confirm email が OFF ならログイン後、**タグ未設定なら `/onboarding`** に誘導される
+4. 興味または研究のどちらかにタグを1つ以上選んで保存 → `/dashboard`
+5. 「ログアウト」で `/login` に戻る
 
 ## このあと追加していくもの (旧 app.py の機能を順次移植)
 
-- `/profile` … プロフィール編集 (`profiles` テーブル)
+- `/profile` … プロフィール編集（オンボーディング後のタグ変更など。現状は初回のみ `/onboarding`）
 - `/research` … 研究投稿（PDF アップロード + Storage `research-pdfs` 連携）
 - `/network` … 研究者ネットワーク図
 - `/search` … キャンパス内検索

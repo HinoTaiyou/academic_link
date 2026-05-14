@@ -1,11 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isOnboardingIncomplete } from "@/lib/profile/onboarding";
 
 /**
- * Next.js middleware で毎リクエスト毎に Supabase セッションをリフレッシュする。
- *
- * これがないと Server Component 側で `getUser()` がしばらくして null を返したり、
- * トークンが切れたまま使われるなど、不安定になる。
+ * Next.js proxy で毎リクエスト Supabase セッションをリフレッシュし、
+ * 未ログイン・オンボーディング未完了のルーティングを制御する。
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -36,16 +35,53 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
-  const isPublicAsset = pathname.startsWith("/_next") || pathname === "/favicon.ico";
+  const isAuthPage =
+    pathname.startsWith("/login") || pathname.startsWith("/signup");
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isOnboardingPage = pathname.startsWith("/onboarding");
+  const isPublicAsset =
+    pathname.startsWith("/_next") || pathname === "/favicon.ico";
 
-  if (!user && !isAuthPage && !isPublicAsset && pathname !== "/") {
+  let onboardingIncomplete = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("interest_tags, research_fields")
+      .eq("id", user.id)
+      .maybeSingle();
+    onboardingIncomplete = isOnboardingIncomplete(profile);
+  }
+
+  if (
+    !user &&
+    !isAuthPage &&
+    !isPublicAsset &&
+    pathname !== "/" &&
+    !isAuthRoute
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthPage) {
+    const url = request.nextUrl.clone();
+    url.pathname = onboardingIncomplete ? "/onboarding" : "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  if (
+    user &&
+    onboardingIncomplete &&
+    !isOnboardingPage &&
+    !isAuthRoute
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/onboarding";
+    return NextResponse.redirect(url);
+  }
+
+  if (user && !onboardingIncomplete && isOnboardingPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
