@@ -91,16 +91,6 @@ export function AppSidebar({ profile, active, className }: Props) {
           ホーム
         </NavItem>
         <NavItem
-          href={`/u/${profile.id}`}
-          icon="👤"
-          active={active === "profile"}
-        >
-          プロフィール
-        </NavItem>
-        <NavItem href="/members" icon="🔍" active={active === "members"}>
-          メンバー検索
-        </NavItem>
-        <NavItem
           href="/research/new"
           icon="📝"
           active={active === "research"}
@@ -109,6 +99,16 @@ export function AppSidebar({ profile, active, className }: Props) {
         </NavItem>
         <NavItem href="/chat" icon="💬" active={active === "chat"}>
           チャット
+        </NavItem>
+        <NavItem href="/members" icon="🔍" active={active === "members"}>
+          メンバー検索
+        </NavItem>
+        <NavItem
+          href={`/u/${profile.id}`}
+          icon="👤"
+          active={active === "profile"}
+        >
+          プロフィール
         </NavItem>
       </nav>
 

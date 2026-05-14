@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { MemberCard } from "./_components/member-card";
-import { TagFilterChips } from "./_components/tag-filter-chips";
+import { TagFilterChips, type FilterType } from "./_components/tag-filter-chips";
 import { dsProgrammingTags } from "@/lib/constants/profile";
 import {
   scoreMember,
@@ -15,15 +15,16 @@ export const metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ tag?: string }>;
+  searchParams: Promise<{ tag?: string; type?: string }>;
 };
 
 export default async function MembersPage({ searchParams }: PageProps) {
   const sp = await searchParams;
+  const filterType: FilterType =
+    sp.type === "research" ? "research" : "interest";
   const rawTag = typeof sp.tag === "string" ? sp.tag.trim() : "";
   const tagSet = new Set(dsProgrammingTags as readonly string[]);
-  const filterTag =
-    rawTag && tagSet.has(rawTag) ? rawTag : null;
+  const filterTag = rawTag && tagSet.has(rawTag) ? rawTag : null;
 
   const supabase = await createClient();
   const {
@@ -53,20 +54,30 @@ export default async function MembersPage({ searchParams }: PageProps) {
   }
 
   let members = (rows ?? []).map((r) =>
-    scoreMember(
-      myInterest,
-      myResearch,
-      r as MemberProfileRow,
-    ),
+    scoreMember(myInterest, myResearch, r as MemberProfileRow),
   );
 
   if (filterTag) {
-    members = members.filter((m) =>
-      m.interest_tags.some((t) => t.replace(/^#/, "").trim() === filterTag),
-    );
+    if (filterType === "research") {
+      members = members.filter((m) =>
+        m.research_fields.some(
+          (t) => t.replace(/^#/, "").trim() === filterTag,
+        ),
+      );
+    } else {
+      members = members.filter((m) =>
+        m.interest_tags.some(
+          (t) => t.replace(/^#/, "").trim() === filterTag,
+        ),
+      );
+    }
   }
 
   members.sort(sortMembers);
+
+  const emptyMessage = filterTag
+    ? `「${filterTag}」を${filterType === "research" ? "研究タグ" : "興味タグ"}に含むメンバーがまだいません。`
+    : "表示できる他のメンバーがまだいません。";
 
   return (
     <AppShell
@@ -82,29 +93,28 @@ export default async function MembersPage({ searchParams }: PageProps) {
     >
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-10">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            メンバー検索
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">メンバー検索</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            あなたの興味タグとの<strong className="font-medium text-slate-700">
-              共通数が多い順
-            </strong>
-            に並べています。カードをクリックすると公開プロフィールへ移動します。
+            あなたのタグの
+            <strong className="font-medium text-slate-700">共通数が多い順</strong>
+            に並べています。クリックすると公開プロフィールへ移動します。
           </p>
         </div>
 
         <TagFilterChips
-          tags={
+          interestTags={
             myInterest.length > 0 ? myInterest : [...dsProgrammingTags]
           }
+          researchTags={
+            myResearch.length > 0 ? myResearch : [...dsProgrammingTags]
+          }
           selectedTag={filterTag}
+          filterType={filterType}
         />
 
         {members.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-200 bg-white/60 p-6 text-sm text-muted-foreground">
-            {filterTag
-              ? `「${filterTag}」を興味タグに含むメンバーがまだいません。`
-              : "表示できる他のメンバーがまだいません。"}
+            {emptyMessage}
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

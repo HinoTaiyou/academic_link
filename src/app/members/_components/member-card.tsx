@@ -24,31 +24,56 @@ export function MemberCard({ member }: Props) {
             <p className="truncate text-xs text-slate-500">{sub}</p>
           ) : null}
         </div>
-        <div className="shrink-0 rounded-full bg-violet-50 px-2 py-1 text-[11px] font-semibold text-[#667eea] ring-1 ring-violet-200">
-          共通 {member.interestOverlap}
+        <div className="flex shrink-0 flex-col gap-1">
+          <span className="rounded-full bg-violet-50 px-2 py-0.5 text-center text-[10px] font-semibold text-[#667eea] ring-1 ring-violet-200">
+            💛 共通 {member.interestOverlap}
+          </span>
+          {member.researchOverlap > 0 ? (
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-center text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
+              🔬 共通 {member.researchOverlap}
+            </span>
+          ) : null}
         </div>
       </Link>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="space-y-1.5">
         {member.interest_tags.length > 0 ? (
           <div className="flex flex-wrap gap-1">
-            {member.interest_tags.slice(0, 5).map((t) => (
+            {member.interest_tags.slice(0, 4).map((t) => (
               <span
-                key={t}
-                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700"
+                key={`i-${t}`}
+                className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-[#667eea]"
               >
                 {t}
               </span>
             ))}
-            {member.interest_tags.length > 5 ? (
+            {member.interest_tags.length > 4 ? (
               <span className="text-[10px] text-slate-400">
-                +{member.interest_tags.length - 5}
+                +{member.interest_tags.length - 4}
               </span>
             ) : null}
           </div>
-        ) : (
-          <p className="text-[11px] text-slate-400">興味タグ未設定</p>
-        )}
+        ) : null}
+        {member.research_fields.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {member.research_fields.slice(0, 4).map((t) => (
+              <span
+                key={`r-${t}`}
+                className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600"
+              >
+                🔬{t}
+              </span>
+            ))}
+            {member.research_fields.length > 4 ? (
+              <span className="text-[10px] text-slate-400">
+                +{member.research_fields.length - 4}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex justify-end">
         <Link
           href={`/chat/${member.id}`}
           className="shrink-0 rounded-md bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] px-2.5 py-1 text-[11px] font-medium text-white shadow-sm hover:shadow-md hover:brightness-110"

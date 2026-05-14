@@ -14,6 +14,7 @@ type Props = {
 export function ChatMessages({ myId, partnerId, initialMessages }: Props) {
   const [messages, setMessages] = useState<MessageData[]>(initialMessages);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const seenIds = useRef(new Set(initialMessages.map((m) => m.id)));
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "instant" });
@@ -23,16 +24,15 @@ export function ChatMessages({ myId, partnerId, initialMessages }: Props) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // Mark unread messages as read on mount
   useEffect(() => {
     markAsReadAction(partnerId);
   }, [partnerId]);
 
-  // Realtime subscription
   useEffect(() => {
     const supabase = createClient();
+    const channelName = `chat:${myId}:${partnerId}:${Date.now()}`;
     const channel = supabase
-      .channel(`chat:${partnerId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -50,11 +50,15 @@ export function ChatMessages({ myId, partnerId, initialMessages }: Props) {
             read_at: string | null;
           };
 
+          if (seenIds.current.has(row.id)) return;
+
           const isRelevant =
             (row.from_id === myId && row.to_id === partnerId) ||
             (row.from_id === partnerId && row.to_id === myId);
 
           if (!isRelevant) return;
+
+          seenIds.current.add(row.id);
 
           const msg: MessageData = {
             id: row.id,
@@ -64,10 +68,7 @@ export function ChatMessages({ myId, partnerId, initialMessages }: Props) {
             readAt: row.read_at,
           };
 
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, msg];
-          });
+          setMessages((prev) => [...prev, msg]);
 
           if (row.from_id === partnerId) {
             markAsReadAction(partnerId);
