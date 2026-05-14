@@ -30,12 +30,12 @@ export function AppShell({ profile, active, children }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200">
-      <div className="fixed inset-y-0 left-0 z-20 hidden w-64 md:block">
+      <div className="fixed inset-y-0 left-0 z-20 hidden w-60 sm:block">
         <AppSidebar profile={profile} active={active} />
       </div>
 
-      <div className="flex min-h-screen flex-col md:pl-64">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/85 px-4 backdrop-blur md:hidden">
+      <div className="flex min-h-screen flex-col sm:pl-60">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/85 px-4 backdrop-blur sm:hidden">
           <button
             type="button"
             aria-label="メニューを開く"
@@ -56,7 +56,7 @@ export function AppShell({ profile, active, children }: Props) {
 
       {open ? (
         <div
-          className="fixed inset-0 z-40 flex md:hidden"
+          className="fixed inset-0 z-40 flex sm:hidden"
           role="dialog"
           aria-modal="true"
         >
