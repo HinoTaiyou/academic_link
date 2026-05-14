@@ -21,14 +21,35 @@ type SavedDraft = {
   rawText: string;
   fileName: string | null;
   pdfPath: string | null;
+  projectId: string;
+  projectName: string;
 };
 
-export function ResearchNewForm() {
+type ProjectOption = {
+  id: string;
+  name: string;
+};
+
+export function ResearchNewForm({
+  projects,
+  initialProjectId,
+}: {
+  projects: ProjectOption[];
+  initialProjectId?: string;
+}) {
   const [analyzeState, analyzeFormAction] = useActionState<AnalyzeState, FormData>(
     analyzeResearchAction,
     {},
   );
   const [mode, setMode] = useState<Mode>("pdf");
+  const [useNewProject, setUseNewProject] = useState(projects.length === 0);
+  const [projectId, setProjectId] = useState(() => {
+    if (initialProjectId && projects.some((p) => p.id === initialProjectId)) {
+      return initialProjectId;
+    }
+    return projects[0]?.id ?? "";
+  });
+  const [newProjectName, setNewProjectName] = useState("");
   const [pendingDraft, setPendingDraft] = useState<SavedDraft | null>(null);
 
   useEffect(() => {
@@ -38,6 +59,8 @@ export function ResearchNewForm() {
         rawText: analyzeState.rawText,
         fileName: analyzeState.fileName,
         pdfPath: analyzeState.pdfPath,
+        projectId: analyzeState.projectId,
+        projectName: analyzeState.projectName,
       });
     }
   }, [analyzeState]);
@@ -57,6 +80,54 @@ export function ResearchNewForm() {
       className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <input type="hidden" name="input_type" value={mode} />
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="project_id">保存先プロジェクト</Label>
+          <button
+            type="button"
+            onClick={() => setUseNewProject((v) => !v)}
+            disabled={projects.length === 0}
+            className="text-xs font-medium text-[#5b3fbf] hover:underline"
+          >
+            {useNewProject ? "既存から選ぶ" : "新規プロジェクトを作る"}
+          </button>
+        </div>
+
+        {useNewProject ? (
+          <Input
+            id="new_project_name"
+            name="new_project_name"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            required
+            minLength={2}
+            maxLength={80}
+            placeholder="例: LLMによる文献レビュー"
+          />
+        ) : (
+          <select
+            id="project_id"
+            name="project_id"
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            required
+            className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
+          >
+            {projects.length === 0 ? (
+              <option value="">プロジェクトがありません（新規作成してください）</option>
+            ) : (
+              projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))
+            )}
+          </select>
+        )}
+
+        {useNewProject ? <input type="hidden" name="project_id" value="" /> : null}
+      </div>
 
       <div className="flex gap-2 rounded-full bg-slate-100 p-1 text-xs font-medium">
         <ModeButton current={mode} value="pdf" onClick={() => setMode("pdf")}>
@@ -78,7 +149,7 @@ export function ResearchNewForm() {
             required
           />
           <p className="text-xs text-muted-foreground">
-            論文・スライドなど。最大 15MB / 本文抽出できる PDF が対象（画像のみのスキャン PDF は不可）。
+            論文・スライドなど。最大 15MB / 図表中心の PDF も解析を試みます（結果は編集画面で必ず確認してください）。
           </p>
         </div>
       ) : (
@@ -133,11 +204,13 @@ function DraftEditor({
       className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <input type="hidden" name="raw_text" value={initial.rawText} />
+      <input type="hidden" name="project_id" value={initial.projectId} />
       <input type="hidden" name="file_name" value={initial.fileName ?? ""} />
       <input type="hidden" name="pdf_path" value={initial.pdfPath ?? ""} />
 
       <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3 text-xs text-[#5b3fbf]">
         🤖 AI が下書きを生成しました。内容を確認・修正してから保存してください。
+        <span className="ml-1">（保存先: <span className="font-semibold">{initial.projectName}</span>）</span>
         {initial.fileName ? (
           <span className="ml-1">
             （添付:{" "}

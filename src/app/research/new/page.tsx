@@ -7,7 +7,15 @@ export const metadata = {
   title: "研究を登録 | Academic Link",
 };
 
-export default async function NewResearchPage() {
+type Props = {
+  searchParams: Promise<{ projectId?: string }>;
+};
+
+export default async function NewResearchPage({ searchParams }: Props) {
+  const sp = await searchParams;
+  const requestedProjectId =
+    typeof sp.projectId === "string" ? sp.projectId.trim() : "";
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,9 +28,24 @@ export default async function NewResearchPage() {
     .eq("id", user.id)
     .maybeSingle();
 
+  const { data: projectsData } = await supabase
+    .from("projects")
+    .select("id, name")
+    .eq("owner_id", user.id)
+    .eq("archived", false)
+    .order("pinned", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  const projects = (projectsData ?? []) as Array<{ id: string; name: string }>;
+  const activeProjectId = projects.some((p) => p.id === requestedProjectId)
+    ? requestedProjectId
+    : undefined;
+
   return (
     <AppShell
       active="research"
+      activeProjectId={activeProjectId}
+      quickProjects={projects.map((p) => ({ id: p.id, name: p.name }))}
       profile={{
         id: user.id,
         realName: profile?.real_name ?? null,
@@ -44,7 +67,7 @@ export default async function NewResearchPage() {
             </p>
           </div>
 
-          <ResearchNewForm />
+          <ResearchNewForm projects={projects} initialProjectId={activeProjectId} />
         </div>
       </div>
     </AppShell>

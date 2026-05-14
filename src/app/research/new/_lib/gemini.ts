@@ -9,7 +9,7 @@ export type ResearchDraft = {
 const MODEL = "gemini-2.5-flash";
 const MAX_INPUT_CHARS = 4000;
 
-export async function analyzeResearchText(rawText: string): Promise<ResearchDraft> {
+function getModelClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -17,6 +17,17 @@ export async function analyzeResearchText(rawText: string): Promise<ResearchDraf
     );
   }
 
+  const client = new GoogleGenerativeAI(apiKey);
+  return client.getGenerativeModel({
+    model: MODEL,
+    generationConfig: {
+      temperature: 0.4,
+      responseMimeType: "application/json",
+    },
+  });
+}
+
+export async function analyzeResearchText(rawText: string): Promise<ResearchDraft> {
   const text = rawText.trim().slice(0, MAX_INPUT_CHARS);
   if (text.length === 0) {
     throw new Error("解析するテキストが空です。");
@@ -40,16 +51,51 @@ export async function analyzeResearchText(rawText: string): Promise<ResearchDraf
 ${text}
 """`;
 
-  const client = new GoogleGenerativeAI(apiKey);
-  const model = client.getGenerativeModel({
-    model: MODEL,
-    generationConfig: {
-      temperature: 0.4,
-      responseMimeType: "application/json",
-    },
-  });
+  const model = getModelClient();
 
   const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  return parseDraft(raw);
+}
+
+export async function analyzeResearchPdf(params: {
+  pdfBytes: Uint8Array;
+  fileName?: string;
+  fallbackText?: string;
+}): Promise<ResearchDraft> {
+  const model = getModelClient();
+  const fallback = (params.fallbackText ?? "").trim().slice(0, MAX_INPUT_CHARS);
+
+  const prompt = `あなたは研究内容の整理アシスタントです。与えられた PDF を解析し、JSON だけを出力してください。コードフェンスや前置きは不要です。
+
+形式:
+{
+  "title": "研究タイトル（推測。なければ内容から短く生成）",
+  "summary": "120〜220文字程度の日本語要約。重要なら図・表（Figure/Table）のポイントも1〜2文で含める",
+  "tags": ["#技術や分野のタグ", "..."]
+}
+
+制約:
+- tags は 3〜6 個、日本語でもよい。先頭の '#' は任意。
+- 図表の記述は、PDF内の情報に基づく範囲で簡潔に。
+- 個人情報・URL・著者名・所属の繰り返しは要約に含めない。
+${fallback ? `
+補助情報（テキスト抽出結果。欠落があり得る）:
+"""
+${fallback}
+"""
+` : ""}`;
+
+  const result = await model.generateContent([
+    prompt,
+    {
+      inlineData: {
+        mimeType: "application/pdf",
+        data: Buffer.from(params.pdfBytes).toString("base64"),
+      },
+    },
+  ]);
+
   const raw = result.response.text();
   return parseDraft(raw);
 }
