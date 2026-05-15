@@ -44,7 +44,6 @@ export default async function NewResearchPage({ searchParams }: Props) {
   return (
     <AppShell
       active="research"
-      activeProjectId={activeProjectId}
       quickProjects={projects.map((p) => ({ id: p.id, name: p.name }))}
       profile={{
         id: user.id,
