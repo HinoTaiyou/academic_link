@@ -6,6 +6,7 @@ import {
   ResearchList,
   type ResearchListItem,
 } from "./_components/research-list";
+import { ProjectDashboardSection } from "../../dashboard/_components/project-dashboard-section";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -62,6 +63,62 @@ export default async function UserProfilePage({ params }: Props) {
     created_at: r.created_at as string,
   }));
 
+  // If viewing own profile, also fetch projects to show project dashboard instead of raw research list
+  let projectCards: Array<{
+    id: string;
+    name: string;
+    description: string;
+    pinned: boolean;
+    updatedAt: string;
+    docTitle: string | null;
+    docSummary: string | null;
+    docTags: string[];
+    figureCount: number;
+  }> = [];
+  if (isMe) {
+    const [projectsRes, projectFilesRes] = await Promise.all([
+      supabase
+        .from("projects")
+        .select("id, name, description, pinned, updated_at")
+        .eq("owner_id", user.id)
+        .eq("archived", false)
+        .order("pinned", { ascending: false })
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("project_files")
+        .select("project_id, title, summary, tags, figure_notes, created_at")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
+
+    const projects = projectsRes.error ? [] : (projectsRes.data ?? []);
+    const projectFiles = projectFilesRes.error ? [] : (projectFilesRes.data ?? []);
+
+    const latestByProject = new Map<string, (typeof projectFiles)[number]>();
+    for (const row of projectFiles) {
+      const pid = String(row.project_id ?? "");
+      if (!pid || latestByProject.has(pid)) continue;
+      latestByProject.set(pid, row);
+    }
+
+    projectCards = projects.map((p) => {
+      const doc = latestByProject.get(p.id);
+      const figureCount = Array.isArray(doc?.figure_notes) ? doc.figure_notes.length : 0;
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description ?? "",
+        pinned: Boolean(p.pinned),
+        updatedAt: p.updated_at,
+        docTitle: doc?.title ?? null,
+        docSummary: doc?.summary ?? null,
+        docTags: (doc?.tags as string[] | null) ?? [],
+        figureCount,
+      };
+    });
+  }
+
   return (
     <AppShell
       active={isMe ? "profile" : undefined}
@@ -109,25 +166,29 @@ export default async function UserProfilePage({ params }: Props) {
             }}
           />
 
-          <section className="space-y-3">
-            <div className="flex items-end justify-between gap-3">
-              <h2 className="text-lg font-bold text-slate-900">
-                📚 登録した研究
-                <span className="ml-2 text-xs font-normal text-slate-500">
-                  {researchItems.length}件
-                </span>
-              </h2>
-              {isMe ? (
-                <Link
-                  href="/research/new"
-                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
-                >
-                  ＋ 研究を追加
-                </Link>
-              ) : null}
-            </div>
-            <ResearchList items={researchItems} isOwner={isMe} />
-          </section>
+          {isMe ? (
+            <ProjectDashboardSection items={projectCards} />
+          ) : (
+            <section className="space-y-3">
+              <div className="flex items-end justify-between gap-3">
+                <h2 className="text-lg font-bold text-slate-900">
+                  📚 登録した研究
+                  <span className="ml-2 text-xs font-normal text-slate-500">
+                    {researchItems.length}件
+                  </span>
+                </h2>
+                {isMe ? (
+                  <Link
+                    href="/research/new"
+                    className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
+                  >
+                    ＋ 研究を追加
+                  </Link>
+                ) : null}
+              </div>
+              <ResearchList items={researchItems} isOwner={isMe} />
+            </section>
+          )}
         </div>
       </div>
     </AppShell>

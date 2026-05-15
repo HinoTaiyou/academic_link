@@ -47,7 +47,7 @@ export function ResearchNewForm({
     if (initialProjectId && projects.some((p) => p.id === initialProjectId)) {
       return initialProjectId;
     }
-    return projects[0]?.id ?? "";
+    return "";
   });
   const [newProjectName, setNewProjectName] = useState("");
   const [dismissedDraftKey, setDismissedDraftKey] = useState<string | null>(null);
@@ -116,6 +116,9 @@ export function ResearchNewForm({
             required
             className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
           >
+            {projectId === "" ? (
+              <option value="">プロジェクトを選択してください</option>
+            ) : null}
             {projects.length === 0 ? (
               <option value="">プロジェクトがありません（新規作成してください）</option>
             ) : (

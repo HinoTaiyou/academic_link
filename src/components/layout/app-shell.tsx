@@ -8,11 +8,10 @@ import { AppSidebar, type SidebarProfile } from "@/components/layout/app-sidebar
 type Props = {
   profile: SidebarProfile;
   active?: "dashboard" | "profile" | "members" | "research" | "chat";
-  quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
   children: React.ReactNode;
 };
 
-export function AppShell({ profile, active, quickProjects, children }: Props) {
+export function AppShell({ profile, active, children }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -33,7 +32,7 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200">
       <div className="fixed inset-y-0 left-0 z-20 hidden w-60 sm:block">
-        <AppSidebar profile={profile} active={active} quickProjects={quickProjects} />
+        <AppSidebar profile={profile} active={active} />
       </div>
 
       <div className="flex min-h-screen flex-col sm:pl-60">

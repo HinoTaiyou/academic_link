@@ -14,25 +14,28 @@ type ProjectCardItem = {
 
 type Props = {
   items: ProjectCardItem[];
+  showHeader?: boolean;
 };
 
-export function ProjectDashboardSection({ items }: Props) {
+export function ProjectDashboardSection({ items, showHeader = true }: Props) {
   return (
     <section className="space-y-3">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">📁 プロジェクトダッシュボード</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            研究の要点と最新資料をカードで確認し、すぐに追加作業へ移動できます。
-          </p>
+      {showHeader && (
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">📁 プロジェクトダッシュボード</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              研究の要点と最新資料をカードで確認し、すぐに追加作業へ移動できます。
+            </p>
+          </div>
+          <Link
+            href="/research/new"
+            className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
+          >
+            ＋ 研究を追加
+          </Link>
         </div>
-        <Link
-          href="/research/new"
-          className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
-        >
-          ＋ 研究を追加
-        </Link>
-      </div>
+      )}
 
       {items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 bg-white/50 p-4 text-sm text-muted-foreground">

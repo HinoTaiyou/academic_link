@@ -19,10 +19,9 @@ type Props = {
   active?: NavKey;
   /** モバイルドロワー利用時：閉じる用に追加クラスを指定可 */
   className?: string;
-  quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
 };
 
-export function AppSidebar({ profile, active, className, quickProjects }: Props) {
+export function AppSidebar({ profile, active, className }: Props) {
   const displayName =
     profile.realName?.trim() || profile.email || "ユーザー";
   const initial = displayName.slice(0, 1).toUpperCase();
@@ -111,25 +110,7 @@ export function AppSidebar({ profile, active, className, quickProjects }: Props)
         >
           プロフィール
         </NavItem>
-        {quickProjects && quickProjects.length > 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="px-1 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-300">
-              研究のショートカット
-            </p>
-            <div className="space-y-1">
-              {quickProjects.slice(0, 6).map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/research/new?projectId=${project.id}`}
-                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-200 hover:bg-white/10 hover:text-white"
-                >
-                  <span className="min-w-0 truncate">{project.name}</span>
-                  {project.pinned ? <span className="text-xs text-violet-300">📌</span> : null}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        
       </nav>
 
       <div className="mt-auto pt-4">
