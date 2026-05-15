@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { ChatMessages } from "./_components/chat-messages";
-import { MessageInput } from "./_components/message-input";
 import type { MessageData } from "./_components/message-bubble";
 
 export const metadata = {
@@ -121,8 +120,6 @@ export default async function ChatRoomPage({ params }: Props) {
           partnerId={partnerId}
           initialMessages={messages}
         />
-
-        <MessageInput myId={user.id} partnerId={partnerId} />
       </div>
     </AppShell>
   );

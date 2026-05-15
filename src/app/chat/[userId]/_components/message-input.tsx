@@ -3,13 +3,16 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import type { MessageData } from "./message-bubble";
 
 type Props = {
   myId: string;
   partnerId: string;
+  /** 送信成功直後に一覧へ反映（Realtime より先に表示） */
+  onMessageSent?: (msg: MessageData) => void;
 };
 
-export function MessageInput({ myId, partnerId }: Props) {
+export function MessageInput({ myId, partnerId, onMessageSent }: Props) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,15 +26,29 @@ export function MessageInput({ myId, partnerId }: Props) {
     setIsSubmitting(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("messages").insert({
-        from_id: myId,
-        to_id: partnerId,
-        content,
-      });
+      const { data, error } = await supabase
+        .from("messages")
+        .insert({
+          from_id: myId,
+          to_id: partnerId,
+          content,
+        })
+        .select("id, from_id, to_id, content, created_at, read_at")
+        .single();
 
       if (error) {
         console.error("send message", error);
         return;
+      }
+
+      if (data) {
+        onMessageSent?.({
+          id: data.id as string,
+          fromId: data.from_id as string,
+          content: data.content as string,
+          createdAt: data.created_at as string,
+          readAt: (data.read_at as string | null) ?? null,
+        });
       }
 
       if (inputRef.current) {
