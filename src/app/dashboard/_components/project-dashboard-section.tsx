@@ -46,7 +46,7 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
           {items.map((item) => (
             <Link
               key={item.id}
-              href={`/research/new?projectId=${item.id}`}
+              href={`/projects/${item.id}`}
               className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#667eea]/30 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-2">
@@ -92,7 +92,7 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
               </div>
               <div className="flex items-center justify-end">
                 <span className="text-xs font-medium text-[#667eea]">
-                  このプロジェクトに追加 →
+                  詳細を見る →
                 </span>
               </div>
             </Link>

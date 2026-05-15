@@ -1,0 +1,322 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { AppShell } from "@/components/layout/app-shell";
+import { createClient } from "@/lib/supabase/server";
+
+export const metadata = {
+  title: "プロジェクト詳細 | Academic Link",
+};
+
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+type ProjectFileItem = {
+  id: string;
+  createdAt: string;
+  sourceType: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  rawText: string;
+  fileName: string | null;
+  storagePath: string | null;
+  mimeType: string | null;
+  figureCount: number;
+};
+
+const BUCKET = "research-pdfs";
+
+export default async function ProjectDetailPage({ params }: Props) {
+  const { id: projectId } = await params;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const [{ data: profile }, { data: project }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("real_name, department, grade, interest_tags")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("projects")
+      .select("id, name, description, pinned, created_at, updated_at")
+      .eq("id", projectId)
+      .eq("owner_id", user.id)
+      .eq("archived", false)
+      .maybeSingle(),
+  ]);
+
+  if (!project) notFound();
+
+  let fileRows: Array<Record<string, unknown>> = [];
+  let fileFetchNotice: string | null = null;
+  const debugErrorDetails: string[] = [];
+
+  // Try primary project_files query
+  const primaryFilesRes = await supabase
+    .from("project_files")
+    .select(
+      "id, created_at, source_type, title, summary, tags, raw_text, file_name, storage_path, mime_type, figure_notes",
+    )
+    .eq("project_id", projectId)
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (!primaryFilesRes.error) {
+    fileRows = (primaryFilesRes.data ?? []) as Array<Record<string, unknown>>;
+  } else {
+    debugErrorDetails.push(String(primaryFilesRes.error?.message ?? primaryFilesRes.error));
+
+    const fallbackFilesRes = await supabase
+      .from("project_files")
+      .select(
+        "id, created_at, source_type, title, summary, tags, raw_text, file_name, storage_path, mime_type",
+      )
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+
+    if (!fallbackFilesRes.error) {
+      fileRows = (fallbackFilesRes.data ?? []) as Array<Record<string, unknown>>;
+      fileFetchNotice =
+        "資料の一部項目（図表メモ）が利用できないため、互換モードで表示しています。";
+    } else {
+      debugErrorDetails.push(String(fallbackFilesRes.error?.message ?? fallbackFilesRes.error));
+
+      const postsFallbackRes = await supabase
+        .from("research_posts")
+        .select("id, created_at, title, summary, tags, raw_text, file_name, pdf_path")
+        .eq("author_id", user.id)
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+
+      if (!postsFallbackRes.error) {
+        fileRows = (postsFallbackRes.data ?? []).map((row) => ({
+          id: row.id,
+          created_at: row.created_at,
+          source_type: row.pdf_path ? "pdf" : "text",
+          title: row.title,
+          summary: row.summary,
+          tags: row.tags,
+          raw_text: row.raw_text,
+          file_name: row.file_name,
+          storage_path: row.pdf_path,
+          mime_type: row.pdf_path ? "application/pdf" : "text/plain",
+          figure_notes: [],
+        })) as Array<Record<string, unknown>>;
+
+        fileFetchNotice =
+          "project_files の読み込みに失敗したため、research_posts から代替表示しています。";
+      } else {
+        debugErrorDetails.push(String(postsFallbackRes.error?.message ?? postsFallbackRes.error));
+        fileRows = [];
+        fileFetchNotice = "資料一覧の読み込みに失敗しました。時間を置いて再度お試しください。";
+      }
+    }
+  }
+
+  const files: ProjectFileItem[] = (fileRows ?? []).map((row) => ({
+    id: String(row.id),
+    createdAt: String(row.created_at),
+    sourceType: String(row.source_type ?? "other"),
+    title: String(row.title ?? "無題"),
+    summary: String(row.summary ?? ""),
+    tags: (row.tags as string[] | null) ?? [],
+    rawText: String(row.raw_text ?? ""),
+    fileName: (row.file_name as string | null) ?? null,
+    storagePath: (row.storage_path as string | null) ?? null,
+    mimeType: (row.mime_type as string | null) ?? null,
+    figureCount: Array.isArray(row.figure_notes) ? row.figure_notes.length : 0,
+  }));
+
+  const signedEntries = await Promise.all(
+    files.map(async (file) => {
+      if (!file.storagePath) return [file.id, null] as const;
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(file.storagePath, 60 * 10);
+      if (error || !data) return [file.id, null] as const;
+      return [file.id, data.signedUrl] as const;
+    }),
+  );
+
+  const signedMap = new Map<string, string | null>(signedEntries);
+
+  const interestTags = (profile?.interest_tags ?? []) as string[];
+
+  return (
+    <AppShell
+      active="profile"
+      profile={{
+        id: user.id,
+        realName: profile?.real_name ?? null,
+        department: profile?.department ?? null,
+        grade: profile?.grade ?? null,
+        interestTags,
+        email: user.email ?? null,
+      }}
+    >
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-10">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-2">
+            <Link
+              href={`/u/${user.id}`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+            >
+              ← プロフィールに戻る
+            </Link>
+            <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
+            {project.description ? (
+              <p className="max-w-3xl text-sm text-slate-600">{project.description}</p>
+            ) : (
+              <p className="text-sm text-slate-400">説明は未設定です。</p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              {project.pinned ? (
+                <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-violet-700">
+                  📌 ピン留め
+                </span>
+              ) : null}
+              <span>作成: {formatDate(project.created_at)}</span>
+              <span>更新: {formatDate(project.updated_at)}</span>
+              <span>資料: {files.length}件</span>
+            </div>
+          </div>
+          <Link
+            href={`/research/new?projectId=${project.id}`}
+            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
+          >
+            ＋ このプロジェクトに研究を追加
+          </Link>
+        </div>
+
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-slate-900">📚 登録済み資料</h2>
+          {fileFetchNotice ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+              {fileFetchNotice}
+            </p>
+          ) : null}
+          {debugErrorDetails.length > 0 ? (
+            <pre className="mt-2 rounded-md bg-slate-50 p-2 text-xs text-red-700">{debugErrorDetails.join('\n')}</pre>
+          ) : null}
+          {files.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-muted-foreground">
+              まだ資料がありません。右上のボタンからこのプロジェクトに研究を追加してください。
+            </p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {files.map((file) => {
+                const signedUrl = signedMap.get(file.id) ?? null;
+                return (
+                  <article
+                    key={file.id}
+                    className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">{file.title}</h3>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                        {sourceLabel(file.sourceType)}
+                      </span>
+                    </div>
+
+                    {file.summary ? (
+                      <p className="line-clamp-4 text-xs leading-relaxed text-slate-600">{file.summary}</p>
+                    ) : (
+                      <p className="text-xs text-slate-400">要約は未設定です。</p>
+                    )}
+
+                    <div className="flex min-h-7 flex-wrap gap-1.5">
+                      {file.tags.slice(0, 8).map((tag) => (
+                        <span
+                          key={`${file.id}-${tag}`}
+                          className="rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] px-2 py-0.5 text-[10px] font-medium text-white"
+                        >
+                          #{tag.replace(/^#/, "")}
+                        </span>
+                      ))}
+                      {file.tags.length === 0 ? (
+                        <span className="text-[11px] text-slate-400">タグ未設定</span>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                      <span>登録日: {formatDate(file.createdAt)}</span>
+                      <span>図表メモ: {file.figureCount}件</span>
+                      {file.fileName ? <span>ファイル: {file.fileName}</span> : null}
+                    </div>
+
+                    {file.rawText ? (
+                      <details className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                        <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                          解析対象テキストを表示
+                        </summary>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">
+                          {clipText(file.rawText, 2400)}
+                        </p>
+                      </details>
+                    ) : null}
+
+                    <div className="mt-auto flex items-center justify-end gap-3 pt-1">
+                      {signedUrl ? (
+                        <a
+                          href={signedUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-medium text-[#667eea] hover:underline"
+                        >
+                          PDFを開く
+                        </a>
+                      ) : null}
+                      <Link
+                        href={`/research/new?projectId=${project.id}`}
+                        className="text-xs font-medium text-slate-600 hover:text-[#667eea]"
+                      >
+                        このプロジェクトに追加 →
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
+    </AppShell>
+  );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "不明";
+  return d.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+}
+
+function sourceLabel(sourceType: string): string {
+  switch (sourceType) {
+    case "pdf":
+      return "PDF";
+    case "text":
+      return "テキスト";
+    case "image":
+      return "画像";
+    default:
+      return "その他";
+  }
+}
+
+function clipText(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}\n\n...（続きは研究登録画面で確認できます）`;
+}
