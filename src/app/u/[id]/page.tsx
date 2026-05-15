@@ -2,16 +2,20 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProfileView } from "./_components/profile-view";
-import {
-  ResearchList,
-  type ResearchListItem,
-} from "./_components/research-list";
+import { ProjectDashboardBrowse } from "./_components/project-dashboard-browse";
 import { ProjectDashboardSection } from "../../dashboard/_components/project-dashboard-section";
+import {
+  loadProfileProjectCards,
+  toOwnerDashboardItems,
+} from "./_lib/load-profile-projects";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "ユーザープロフィール | Academic Link",
 };
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -43,7 +47,9 @@ export default async function UserProfilePage({ params }: Props) {
         .maybeSingle(),
       supabase
         .from("research_posts")
-        .select("id, title, summary, tags, file_name, pdf_path, created_at")
+        .select(
+          "id, title, summary, tags, file_name, pdf_path, created_at, project_id",
+        )
         .eq("author_id", id)
         .order("created_at", { ascending: false }),
     ]);
@@ -53,71 +59,25 @@ export default async function UserProfilePage({ params }: Props) {
   }
 
   const isMe = profile.id === user.id;
-  const researchItems: ResearchListItem[] = (researchRows ?? []).map((r) => ({
+  const profileDisplayName =
+    (profile.real_name as string | null)?.trim() || "研究者";
+
+  const researchForProjects = (researchRows ?? []).map((r) => ({
     id: r.id as string,
     title: (r.title as string) ?? "",
     summary: (r.summary as string) ?? "",
-    tags: ((r.tags as string[]) ?? []),
-    file_name: (r.file_name as string | null) ?? null,
-    pdf_path: (r.pdf_path as string | null) ?? null,
+    tags: ((r.tags as string[]) ?? []) as string[],
     created_at: r.created_at as string,
+    project_id: (r.project_id as string | null) ?? null,
   }));
 
-  // If viewing own profile, also fetch projects to show project dashboard instead of raw research list
-  let projectCards: Array<{
-    id: string;
-    name: string;
-    description: string;
-    pinned: boolean;
-    updatedAt: string;
-    docTitle: string | null;
-    docSummary: string | null;
-    docTags: string[];
-    figureCount: number;
-  }> = [];
-  if (isMe) {
-    const [projectsRes, projectFilesRes] = await Promise.all([
-      supabase
-        .from("projects")
-        .select("id, name, description, pinned, updated_at")
-        .eq("owner_id", user.id)
-        .eq("archived", false)
-        .order("pinned", { ascending: false })
-        .order("updated_at", { ascending: false }),
-      supabase
-        .from("project_files")
-        .select("project_id, title, summary, tags, figure_notes, created_at")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(200),
-    ]);
-
-    const projects = projectsRes.error ? [] : (projectsRes.data ?? []);
-    const projectFiles = projectFilesRes.error ? [] : (projectFilesRes.data ?? []);
-
-    const latestByProject = new Map<string, (typeof projectFiles)[number]>();
-    for (const row of projectFiles) {
-      const pid = String(row.project_id ?? "");
-      if (!pid || latestByProject.has(pid)) continue;
-      latestByProject.set(pid, row);
-    }
-
-    projectCards = projects.map((p) => {
-      const doc = latestByProject.get(p.id);
-      const figureCount = Array.isArray(doc?.figure_notes) ? doc.figure_notes.length : 0;
-      return {
-        id: p.id,
-        name: p.name,
-        description: p.description ?? "",
-        pinned: Boolean(p.pinned),
-        updatedAt: p.updated_at,
-        docTitle: doc?.title ?? null,
-        docSummary: doc?.summary ?? null,
-        docTags: (doc?.tags as string[] | null) ?? [],
-        figureCount,
-      };
-    });
-  }
+  const projectReadClient = isMe ? supabase : (createAdminClient() ?? supabase);
+  const projectCards = await loadProfileProjectCards(
+    projectReadClient,
+    profile.id,
+    researchForProjects,
+  );
+  const ownerDashboardItems = toOwnerDashboardItems(projectCards);
 
   return (
     <AppShell
@@ -167,26 +127,24 @@ export default async function UserProfilePage({ params }: Props) {
           />
 
           {isMe ? (
-            <ProjectDashboardSection items={projectCards} />
+            <ProjectDashboardSection items={ownerDashboardItems} />
           ) : (
             <section className="space-y-3">
               <div className="flex items-end justify-between gap-3">
-                <h2 className="text-lg font-bold text-slate-900">
-                  📚 登録した研究
-                  <span className="ml-2 text-xs font-normal text-slate-500">
-                    {researchItems.length}件
-                  </span>
-                </h2>
-                {isMe ? (
-                  <Link
-                    href="/research/new"
-                    className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
-                  >
-                    ＋ 研究を追加
-                  </Link>
-                ) : null}
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">
+                    📁 プロジェクトダッシュボード
+                  </h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {profileDisplayName}
+                    さんの研究プロジェクトと最新資料です。
+                  </p>
+                </div>
               </div>
-              <ResearchList items={researchItems} isOwner={isMe} />
+              <ProjectDashboardBrowse
+                items={projectCards}
+                authorName={profileDisplayName}
+              />
             </section>
           )}
         </div>

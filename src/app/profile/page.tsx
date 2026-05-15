@@ -3,11 +3,17 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProfileEditForm } from "./_components/profile-edit-form";
 import { ProjectDashboardSection } from "../dashboard/_components/project-dashboard-section";
+import {
+  loadProfileProjectCards,
+  toOwnerDashboardItems,
+} from "../u/[id]/_lib/load-profile-projects";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "プロフィール | Academic Link",
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -19,53 +25,31 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("real_name, department, grade, interest_tags, research_fields")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const [projectsRes, projectFilesRes] = await Promise.all([
+  const [{ data: profile }, { data: researchRows }] = await Promise.all([
     supabase
-      .from("projects")
-      .select("id, name, description, pinned, updated_at")
-      .eq("owner_id", user.id)
-      .eq("archived", false)
-      .order("pinned", { ascending: false })
-      .order("updated_at", { ascending: false }),
+      .from("profiles")
+      .select("real_name, department, grade, interest_tags, research_fields")
+      .eq("id", user.id)
+      .maybeSingle(),
     supabase
-      .from("project_files")
-      .select("project_id, title, summary, tags, figure_notes, created_at")
-      .eq("owner_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(200),
+      .from("research_posts")
+      .select("id, title, summary, tags, created_at, project_id")
+      .eq("author_id", user.id)
+      .order("created_at", { ascending: false }),
   ]);
 
-  const projects = projectsRes.error ? [] : (projectsRes.data ?? []);
-  const projectFiles = projectFilesRes.error ? [] : (projectFilesRes.data ?? []);
+  const researchForProjects = (researchRows ?? []).map((r) => ({
+    id: r.id as string,
+    title: (r.title as string) ?? "",
+    summary: (r.summary as string) ?? "",
+    tags: ((r.tags as string[]) ?? []) as string[],
+    created_at: r.created_at as string,
+    project_id: (r.project_id as string | null) ?? null,
+  }));
 
-  const latestByProject = new Map<string, (typeof projectFiles)[number]>();
-  for (const row of projectFiles) {
-    const pid = String(row.project_id ?? "");
-    if (!pid || latestByProject.has(pid)) continue;
-    latestByProject.set(pid, row);
-  }
-
-  const projectCards = projects.map((p) => {
-    const doc = latestByProject.get(p.id);
-    const figureCount = Array.isArray(doc?.figure_notes) ? doc.figure_notes.length : 0;
-    return {
-      id: p.id,
-      name: p.name,
-      description: p.description ?? "",
-      pinned: Boolean(p.pinned),
-      updatedAt: p.updated_at,
-      docTitle: doc?.title ?? null,
-      docSummary: doc?.summary ?? null,
-      docTags: (doc?.tags as string[] | null) ?? [],
-      figureCount,
-    };
-  });
+  const projectCards = toOwnerDashboardItems(
+    await loadProfileProjectCards(supabase, user.id, researchForProjects),
+  );
 
   return (
     <AppShell

@@ -383,6 +383,12 @@ on public.projects for select
 to authenticated
 using (auth.uid() = owner_id);
 
+drop policy if exists "projects_select_authed" on public.projects;
+create policy "projects_select_authed"
+on public.projects for select
+to authenticated
+using (archived = false);
+
 drop policy if exists "projects_insert_own" on public.projects;
 create policy "projects_insert_own"
 on public.projects for insert
@@ -412,6 +418,17 @@ using (
   and exists (
     select 1 from public.projects p
     where p.id = project_id and p.owner_id = auth.uid()
+  )
+);
+
+drop policy if exists "project_files_select_authed" on public.project_files;
+create policy "project_files_select_authed"
+on public.project_files for select
+to authenticated
+using (
+  exists (
+    select 1 from public.projects p
+    where p.id = project_id and p.archived = false
   )
 );
 
