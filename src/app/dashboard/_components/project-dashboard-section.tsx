@@ -21,54 +21,88 @@ type Props = {
   showHeader?: boolean;
 };
 
+function normalizeTag(tag: string): string {
+  return tag.replace(/^#/, "").trim();
+}
+
 export function ProjectDashboardSection({ items, showHeader = true }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const initialTag = searchParams?.get("tag") ?? null;
-  const [selectedTag, setSelectedTag] = useState<string | null>(initialTag);
+  const parseSelectedTags = useCallback(() => {
+    const params = searchParams ?? new URLSearchParams();
+    return Array.from(
+      new Set(
+        params
+          .getAll("tag")
+          .map(normalizeTag)
+          .filter(Boolean),
+      ),
+    );
+  }, [searchParams]);
+
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => parseSelectedTags());
 
   useEffect(() => {
     // keep state in sync when user navigates via back/forward
-    setSelectedTag(searchParams?.get("tag") ?? null);
-  }, [searchParams]);
+    setSelectedTags(parseSelectedTags());
+  }, [parseSelectedTags, searchParams]);
 
-  const { allTags, tagCounts, sortedTags } = useMemo(() => {
+  const { tagCounts, sortedTags } = useMemo(() => {
     const counts: Record<string, number> = {};
     items.forEach((it) =>
       it.docTags.forEach((t) => {
-        const k = t.replace(/^#/, "");
+        const k = normalizeTag(t);
         counts[k] = (counts[k] || 0) + 1;
       })
     );
     const tags = Object.keys(counts);
     const sorted = tags.sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
-    return { allTags: tags, tagCounts: counts, sortedTags: sorted };
+    return { tagCounts: counts, sortedTags: sorted };
   }, [items]);
 
   const filtered = useMemo(() => {
-    if (!selectedTag) return items;
-    return items.filter((it) => it.docTags.map((t) => t.replace(/^#/, "")).includes(selectedTag));
-  }, [items, selectedTag]);
+    if (selectedTags.length === 0) return items;
+    return items.filter((it) => {
+      const itemTags = it.docTags.map(normalizeTag);
+      return selectedTags.some((tag) => itemTags.includes(tag));
+    });
+  }, [items, selectedTags]);
 
-  const handleTagClick = useCallback(
-    (tag: string) => {
-      const next = selectedTag === tag ? null : tag;
-      setSelectedTag(next);
+  const updateSelectedTags = useCallback(
+    (nextTags: string[]) => {
+      setSelectedTags(nextTags);
       const params = new URLSearchParams(Array.from(searchParams.entries()));
-      if (next) params.set("tag", next);
-      else params.delete("tag");
+      params.delete("tag");
+      nextTags.forEach((tag) => params.append("tag", tag));
       const qs = params.toString();
       router.push(`${pathname}${qs ? `?${qs}` : ""}`);
     },
-    [pathname, router, searchParams, selectedTag]
+    [pathname, router, searchParams],
+  );
+
+  const toggleTag = useCallback(
+    (tag: string) => {
+      const normalized = normalizeTag(tag);
+      const next = selectedTags.includes(normalized)
+        ? selectedTags.filter((item) => item !== normalized)
+        : [...selectedTags, normalized];
+      updateSelectedTags(next);
+    },
+    [selectedTags, updateSelectedTags],
   );
 
   const TOP_N = 5;
   const [showAllModal, setShowAllModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (showAllModal) {
+      searchInputRef.current?.focus();
+    }
+  }, [showAllModal]);
 
   return (
     <section className="space-y-3">
@@ -89,6 +123,32 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
         </div>
       )}
 
+      {/* selected tags */}
+      {selectedTags.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+          <span className="text-[11px] font-semibold text-slate-500">選択中</span>
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className="rounded-full bg-[#667eea] px-3 py-1 text-xs font-medium text-white"
+              >
+                #{tag} ×
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => updateSelectedTags([])}
+            className="ml-auto text-xs text-slate-500 hover:text-slate-700"
+          >
+            すべて解除
+          </button>
+        </div>
+      ) : null}
+
       {/* tag quick bar (top N popular) */}
       <div className="flex items-center gap-2">
         <div className="flex flex-wrap gap-2">
@@ -96,11 +156,12 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
             <span className="text-xs text-slate-400">タグはまだありません</span>
           ) : (
             sortedTags.slice(0, TOP_N).map((t) => {
-              const active = selectedTag === t;
+              const active = selectedTags.includes(t);
               return (
                 <button
                   key={t}
-                  onClick={() => handleTagClick(t)}
+                  type="button"
+                  onClick={() => toggleTag(t)}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                     active
                       ? "bg-[#667eea] text-white"
@@ -115,6 +176,7 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
         </div>
         {sortedTags.length > TOP_N ? (
           <button
+            type="button"
             onClick={() => setShowAllModal(true)}
             className="ml-auto rounded-md px-3 py-1 text-xs text-slate-600 hover:bg-slate-100"
           >
@@ -134,7 +196,11 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">全てのタグ</h3>
               <button
-                onClick={() => setShowAllModal(false)}
+                type="button"
+                onClick={() => {
+                  setShowAllModal(false);
+                  setSearchQuery("");
+                }}
                 className="text-xs text-slate-500 hover:text-slate-700"
               >
                 閉じる
@@ -142,7 +208,9 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
             </div>
             <div className="mt-4">
               <input
-                ref={(el) => (searchInputRef.current = el)}
+                ref={(el) => {
+                  searchInputRef.current = el;
+                }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="タグ名で検索（部分一致）"
@@ -160,17 +228,31 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
                 return visible.map((t) => (
                   <button
                     key={t}
-                    onClick={() => {
-                      handleTagClick(t);
-                      setShowAllModal(false);
-                      setSearchQuery("");
-                    }}
-                    className="rounded-md border px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    type="button"
+                    onClick={() => toggleTag(t)}
+                    className={`rounded-md border px-3 py-2 text-sm transition ${
+                      selectedTags.includes(t)
+                        ? "border-[#667eea] bg-violet-50 text-[#667eea]"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
                     #{t} <span className="ml-2 text-xs text-slate-400">{tagCounts[t]}</span>
                   </button>
                 ));
               })()}
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <span className="text-xs text-slate-500">複数選択できます</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAllModal(false);
+                  setSearchQuery("");
+                }}
+                className="rounded-md bg-[#667eea] px-3 py-1.5 text-xs font-medium text-white"
+              >
+                完了
+              </button>
             </div>
           </div>
         </div>
@@ -203,23 +285,27 @@ export function ProjectDashboardSection({ items, showHeader = true }: Props) {
               </div>
 
               <div className="flex min-h-7 flex-wrap gap-1.5">
-                {item.docTags.slice(0, 4).map((t) => (
-                  <button
-                    key={`${item.id}-${t}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleTagClick(t.replace(/^#/, ""));
-                    }}
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition ${
-                      selectedTag === t.replace(/^#/, "")
-                        ? "bg-[#4457d6] text-white"
-                        : "bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-white"
-                    }`}
-                  >
-                    #{t.replace(/^#/, "")}
-                  </button>
-                ))}
+                {item.docTags.slice(0, 4).map((t) => {
+                  const normalized = normalizeTag(t);
+                  return (
+                    <button
+                      key={`${item.id}-${t}`}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleTag(normalized);
+                      }}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition ${
+                        selectedTags.includes(normalized)
+                          ? "bg-[#4457d6] text-white"
+                          : "bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-white"
+                      }`}
+                    >
+                      #{normalized}
+                    </button>
+                  );
+                })}
                 {item.docTags.length === 0 ? (
                   <span className="text-[11px] text-slate-400">タグ未設定</span>
                 ) : null}
