@@ -71,24 +71,10 @@ export function ProjectDashboardBrowse({ items, authorName }: Props) {
                 ) : null}
               </div>
 
-              {item.description ? (
-                <p className="line-clamp-2 text-xs text-slate-600">
-                  {item.description}
-                </p>
-              ) : (
-                <p className="text-xs text-slate-400">説明は未設定です。</p>
-              )}
-
               <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
-                <p className="text-[11px] font-semibold text-slate-600">
-                  最新の研究あらすじ
-                </p>
-                <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-800">
-                  {item.docTitle ?? "まだ資料がありません"}
-                </p>
-                <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-slate-600">
-                  {item.docSummary ??
-                    "このプロジェクトに資料が追加されると、ここに要約が表示されます。"}
+                <p className="text-[11px] font-semibold text-slate-600">プロジェクト概要</p>
+                <p className="mt-1 line-clamp-3 text-xs font-medium text-slate-800">
+                  {item.description ?? item.docSummary ?? "説明は未設定です。"}
                 </p>
               </div>
 

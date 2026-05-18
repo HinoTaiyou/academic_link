@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import ProjectEditModal from "@/components/projects/project-edit-modal";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -173,11 +174,16 @@ export default async function ProjectDetailPage({ params }: Props) {
               ← プロフィールに戻る
             </Link>
             <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
-            {project.description ? (
-              <p className="max-w-3xl text-sm text-slate-600">{project.description}</p>
-            ) : (
-              <p className="text-sm text-slate-400">説明は未設定です。</p>
-            )}
+            <div className="flex items-start gap-3">
+              {project.description ? (
+                <p className="max-w-3xl text-sm text-slate-600">{project.description}</p>
+              ) : (
+                <p className="text-sm text-slate-400">説明は未設定です。</p>
+              )}
+              <div className="mt-0.5">
+                <ProjectEditModal projectId={project.id} initialDescription={project.description} />
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               {project.pinned ? (
                 <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-violet-700">
@@ -228,7 +234,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                     </div>
 
                     {file.summary ? (
-                      <p className="line-clamp-4 text-xs leading-relaxed text-slate-600">{file.summary}</p>
+                      <p className="text-xs leading-relaxed text-slate-600">{file.summary}</p>
                     ) : (
                       <p className="text-xs text-slate-400">要約は未設定です。</p>
                     )}
