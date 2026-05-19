@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button";
+import { FlaskConical, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TagPicker } from "@/components/profile/tag-picker";
@@ -11,10 +11,14 @@ import {
   dsProgrammingTags,
   gradeOptions,
 } from "@/lib/constants/profile";
+import { cn } from "@/lib/utils";
 import {
   updateProfileAction,
   type ProfileUpdateState,
 } from "../_lib/actions";
+
+const fieldClass = "al-auth-input h-11 shadow-none focus:ring-[var(--al-accent)]/20";
+const selectClass = cn(fieldClass, "appearance-none");
 
 type Props = {
   initialInterestTags: string[];
@@ -43,10 +47,7 @@ export function ProfileEditForm({
   );
 
   return (
-    <form
-      action={formAction}
-      className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-    >
+    <form action={formAction} className="al-glass-card space-y-6 p-6">
       <input
         type="hidden"
         name="interest_tags_json"
@@ -58,29 +59,34 @@ export function ProfileEditForm({
         value={JSON.stringify(researchFields)}
       />
 
-      <div className="space-y-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <section className="space-y-4 rounded-xl border border-[var(--al-border)] bg-[var(--al-surface)]/80 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--al-muted)]">
           基本情報
         </p>
         <div className="space-y-2">
-          <Label htmlFor="real_name">本名</Label>
+          <Label htmlFor="real_name" className="text-[var(--al-ink)]">
+            本名
+          </Label>
           <Input
             id="real_name"
             name="real_name"
             value={realName}
             onChange={(e) => setRealName(e.target.value)}
             placeholder="例: 山田 太郎"
+            className={fieldClass}
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="department">学部</Label>
+            <Label htmlFor="department" className="text-[var(--al-ink)]">
+              学部
+            </Label>
             <select
               id="department"
               name="department"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="flex h-11 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
+              className={selectClass}
             >
               <option value="">（未選択）</option>
               {departmentOptions.map((d) => (
@@ -91,13 +97,15 @@ export function ProfileEditForm({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="grade">学年 / 卒業年度</Label>
+            <Label htmlFor="grade" className="text-[var(--al-ink)]">
+              学年 / 卒業年度
+            </Label>
             <select
               id="grade"
               name="grade"
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
-              className="flex h-11 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
+              className={selectClass}
             >
               <option value="">（未選択）</option>
               {gradeOptions.map((g) => (
@@ -108,10 +116,11 @@ export function ProfileEditForm({
             </select>
           </div>
         </div>
-      </div>
+      </section>
 
       <TagPicker
-        label="💛 興味のある分野"
+        label="興味のある分野"
+        icon={Sparkles}
         options={dsProgrammingTags}
         value={interestTags}
         onChange={setInterestTags}
@@ -119,23 +128,28 @@ export function ProfileEditForm({
       />
 
       <TagPicker
-        label="🔬 研究した分野（任意）"
+        label="研究した分野（任意）"
+        icon={FlaskConical}
         options={dsProgrammingTags}
         value={researchFields}
         onChange={setResearchFields}
         hint="実際に研究・実践した分野があれば選択してください"
       />
 
-      {state.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {state.error}
-        </p>
-      ) : null}
-      {state.ok ? (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          プロフィールを保存しました。
-        </p>
-      ) : null}
+      {(state.error || state.ok) && (
+        <div className="space-y-2">
+          {state.error ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {state.error}
+            </p>
+          ) : null}
+          {state.ok ? (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+              プロフィールを保存しました。
+            </p>
+          ) : null}
+        </div>
+      )}
 
       <div className="flex justify-end">
         <SubmitButton />
@@ -147,12 +161,12 @@ export function ProfileEditForm({
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button
+    <button
       type="submit"
-      className="h-11 min-w-[10rem] bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110 disabled:opacity-60"
       disabled={pending}
+      className="al-btn-gradient inline-flex h-11 min-w-[10rem] items-center justify-center px-5 text-sm disabled:opacity-60"
     >
       {pending ? "保存中…" : "変更を保存"}
-    </Button>
+    </button>
   );
 }

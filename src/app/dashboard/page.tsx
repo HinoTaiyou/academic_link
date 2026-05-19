@@ -27,8 +27,8 @@ export default async function DashboardPage() {
   const interests = (profile?.interest_tags ?? []) as string[];
 
   const [interestNews, popularNews] = await Promise.all([
-    getNewsForInterests(interests, 8),
-    getPopularNews(interests, 6),
+    getNewsForInterests(interests, 9),
+    getPopularNews(interests, 7),
   ]);
 
   return (
@@ -45,19 +45,22 @@ export default async function DashboardPage() {
     >
       <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-10">
         <NewsSection
-          title="💛 あなたの興味に基づくニュース"
+          variant="interest"
+          title="あなたの興味に基づくニュース"
           description={
             interests.length
-              ? `タグ: ${interests.join(" / ")}`
+              ? "プロフィールの興味タグに合わせて Google ニュースから取得しています。"
               : "興味のあるタグを設定すると、関連ニュースがここに表示されます。"
           }
+          interestTags={interests}
           emptyHint="関連するニュースがまだありません。タグを増やすと候補が広がります。"
           items={interestNews}
         />
 
         <NewsSection
-          title="🔥 データサイエンスの注目ニュース"
-          description="Google ニュース「テクノロジー」のヘッドラインから自動取得"
+          variant="popular"
+          title="データサイエンス・プログラミングの注目ニュース"
+          description="データサイエンス・プログラミングの最新情報をお届けします。"
           items={popularNews}
         />
       </div>

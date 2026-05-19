@@ -18,17 +18,18 @@ export function MessageBubble({ message, isMe }: Props) {
     <div className={cn("flex", isMe ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+          "max-w-[min(75%,28rem)] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
           isMe
-            ? "rounded-br-md bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-white"
-            : "rounded-bl-md border border-slate-200 bg-white text-slate-800",
+            ? "rounded-br-md bg-[var(--al-accent)] text-white"
+            : "rounded-bl-md border border-[var(--al-border)] bg-white text-[var(--al-ink)]",
         )}
       >
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
         <time
+          dateTime={message.createdAt}
           className={cn(
             "mt-1 block text-right text-[10px]",
-            isMe ? "text-white/60" : "text-slate-400",
+            isMe ? "text-white/70" : "text-[var(--al-muted)]",
           )}
         >
           {formatTime(message.createdAt)}

@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { MessageSquare } from "lucide-react";
+import { FolderCard } from "@/components/projects/folder-card";
+import { cn } from "@/lib/utils";
 import type { ProfileProjectCard } from "../_lib/load-profile-projects";
 import { ResearchQaModal, type QaMessage, type QaSession } from "./research-qa-modal";
 
 type Props = {
   items: ProfileProjectCard[];
   authorName: string;
+  compact?: boolean;
 };
 
 function toSession(item: ProfileProjectCard): QaSession | null {
@@ -28,7 +31,11 @@ function toSession(item: ProfileProjectCard): QaSession | null {
   return null;
 }
 
-export function ProjectDashboardBrowse({ items, authorName }: Props) {
+export function ProjectDashboardBrowse({
+  items,
+  authorName,
+  compact = true,
+}: Props) {
   const [session, setSession] = useState<QaSession | null>(null);
   const [histories, setHistories] = useState<Record<string, QaMessage[]>>({});
   const nextIdRef = useRef(1);
@@ -46,73 +53,64 @@ export function ProjectDashboardBrowse({ items, authorName }: Props) {
 
   if (items.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-slate-200 bg-white/50 p-4 text-sm text-muted-foreground">
+      <p className="rounded-xl border border-dashed border-[var(--al-border)] bg-[var(--al-surface)] p-4 text-sm text-[var(--al-muted)]">
         このメンバーはまだ研究プロジェクトを公開していません。
       </p>
     );
   }
 
+  const folderSize = compact ? "sm" : "md";
+
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {items.map((item) => {
+      <div
+        className={cn(
+          "grid w-full gap-4 overflow-visible pt-1 sm:gap-5",
+          compact
+            ? "grid-cols-2 sm:grid-cols-2"
+            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+        )}
+      >
+        {items.map((item, index) => {
           const qa = toSession(item);
+          const href = item.viewHref ?? undefined;
+          const fileCount = Math.max(
+            item.fileCount ?? 0,
+            item.docSummary ? 1 : 0,
+          );
+
           return (
-            <article
+            <FolderCard
               key={item.id}
-              className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">
-                  {item.name}
-                </h3>
-                {item.pinned ? (
-                  <span className="text-xs text-violet-600">📌</span>
-                ) : null}
-              </div>
-
-              <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
-                <p className="text-[11px] font-semibold text-slate-600">プロジェクト概要</p>
-                <p className="mt-1 line-clamp-3 text-xs font-medium text-slate-800">
-                  {item.description ?? item.docSummary ?? "説明は未設定です。"}
-                </p>
-              </div>
-
-              <div className="flex min-h-7 flex-wrap gap-1.5">
-                {item.docTags.slice(0, 4).map((t) => (
-                  <span
-                    key={`${item.id}-${t}`}
-                    className="rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] px-2 py-0.5 text-[10px] font-medium text-white"
+              layout="tile"
+              index={index}
+              title={item.name}
+              pinned={item.pinned}
+              size={folderSize}
+              fileCount={fileCount}
+              href={href}
+              className="w-full"
+              footer={
+                qa ? (
+                  <button
+                    type="button"
+                    onClick={() => setSession(qa)}
+                    className="al-folder-tile-qa"
                   >
-                    #{t.replace(/^#/, "")}
-                  </span>
-                ))}
-                {item.docTags.length === 0 ? (
-                  <span className="text-[11px] text-slate-400">タグ未設定</span>
-                ) : null}
-              </div>
-
-              <div className="mt-auto flex items-center justify-between pt-1 text-[11px] text-slate-500">
-                <span>図表メモ {item.figureCount}件</span>
-                <span>{formatDate(item.updatedAt)}</span>
-              </div>
-
-              {qa ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSession(qa)}
-                  className="w-full border-violet-200 text-[#667eea] hover:border-[#667eea]/50 hover:bg-violet-50"
-                >
-                  💬 この研究について質問
-                </Button>
-              ) : (
-                <p className="text-center text-[11px] text-slate-400">
-                  質問できる公開テキストがありません
-                </p>
-              )}
-            </article>
+                    <MessageSquare
+                      className="h-3.5 w-3.5 shrink-0"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    この研究について質問
+                  </button>
+                ) : (
+                  <p className="rounded-xl bg-white/60 px-2 py-2 text-center text-[10px] leading-snug text-[var(--al-muted)] ring-1 ring-[var(--al-border)]/80">
+                    質問できる公開テキストがありません
+                  </p>
+                )
+              }
+            />
           );
         })}
       </div>
@@ -128,10 +126,4 @@ export function ProjectDashboardBrowse({ items, authorName }: Props) {
       />
     </>
   );
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "更新日不明";
-  return d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }

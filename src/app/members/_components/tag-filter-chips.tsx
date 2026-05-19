@@ -1,92 +1,165 @@
 import Link from "next/link";
+import { FlaskConical, Sparkles } from "lucide-react";
+import type { FilterTagOption } from "../_lib/filter-tags";
 import { cn } from "@/lib/utils";
 
 export type FilterType = "interest" | "research";
 
 type Props = {
-  interestTags: readonly string[];
-  researchTags: readonly string[];
+  interestOptions: FilterTagOption[];
+  researchOptions: FilterTagOption[];
   selectedTag: string | null;
   filterType: FilterType;
 };
 
 export function TagFilterChips({
-  interestTags,
-  researchTags,
+  interestOptions,
+  researchOptions,
   selectedTag,
   filterType,
 }: Props) {
-  const tags = filterType === "interest" ? interestTags : researchTags;
+  const options =
+    filterType === "interest" ? interestOptions : researchOptions;
+  const mine = options.filter((o) => o.isMine);
+  const others = options.filter((o) => !o.isMine);
 
   return (
-    <div className="space-y-3">
-      {/* Type toggle */}
-      <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 text-xs font-medium">
+    <div className="space-y-4">
+      <div className="flex gap-2 rounded-xl border border-[var(--al-border)] bg-white p-1 text-xs font-medium">
         <TypeTab
-          label="💛 興味タグ"
+          label="興味タグ"
+          icon={Sparkles}
           type="interest"
           current={filterType}
           selectedTag={selectedTag}
         />
         <TypeTab
-          label="🔬 研究タグ"
+          label="研究タグ"
+          icon={FlaskConical}
           type="research"
           current={filterType}
           selectedTag={selectedTag}
         />
       </div>
 
-      {/* Tag chips */}
-      {tags.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500">絞り込み:</span>
-          <Link
-            href={`/members?type=${filterType}`}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition",
-              selectedTag == null
-                ? "border-[#667eea] bg-violet-50 text-[#667eea]"
-                : "border-slate-200 bg-white text-slate-600 hover:border-[#667eea]/40",
-            )}
-          >
-            すべて
-          </Link>
-          {tags.map((t) => {
-            const active = selectedTag === t;
-            return (
-              <Link
-                key={t}
-                href={`/members?type=${filterType}&tag=${encodeURIComponent(t)}`}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition",
-                  active
-                    ? "border-[#667eea] bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-[#667eea]/40",
-                )}
-              >
-                {t}
-              </Link>
-            );
-          })}
+      {options.length > 0 ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-semibold text-[var(--al-muted)]">
+              絞り込み
+            </span>
+            <AllChip selectedTag={selectedTag} filterType={filterType} />
+          </div>
+
+          {mine.length > 0 ? (
+            <FilterChipRow
+              label="あなたのタグ"
+              options={mine}
+              selectedTag={selectedTag}
+              filterType={filterType}
+            />
+          ) : null}
+
+          {others.length > 0 ? (
+            <FilterChipRow
+              label={mine.length > 0 ? "その他のタグ" : "タグ一覧"}
+              options={others}
+              selectedTag={selectedTag}
+              filterType={filterType}
+            />
+          ) : null}
         </div>
       ) : (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-[var(--al-muted)]">
           {filterType === "interest"
-            ? "興味タグが未設定です。プロフィールで設定してください。"
-            : "研究タグが未設定です。プロフィールで設定してください。"}
+            ? "興味タグがまだありません。プロフィールで設定するか、他のメンバーが登録するのをお待ちください。"
+            : "研究タグがまだありません。プロフィールで設定するか、他のメンバーが登録するのをお待ちください。"}
         </p>
       )}
     </div>
   );
 }
 
+function AllChip({
+  selectedTag,
+  filterType,
+}: {
+  selectedTag: string | null;
+  filterType: FilterType;
+}) {
+  return (
+    <Link
+      href={`/members?type=${filterType}`}
+      className={cn(
+        "rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition",
+        selectedTag == null
+          ? "border-[var(--al-accent)] bg-[var(--al-accent)] text-white shadow-sm"
+          : "border-[var(--al-border)] bg-white text-[var(--al-muted)] hover:border-[color-mix(in_srgb,var(--al-accent)_30%,var(--al-border))]",
+      )}
+    >
+      すべて
+    </Link>
+  );
+}
+
+function FilterChipRow({
+  label,
+  options,
+  selectedTag,
+  filterType,
+}: {
+  label: string;
+  options: FilterTagOption[];
+  selectedTag: string | null;
+  filterType: FilterType;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-full shrink-0 text-[10px] font-semibold uppercase tracking-wide text-[var(--al-muted)] sm:w-auto sm:normal-case sm:tracking-normal">
+        {label}
+      </span>
+      {options.map((o) => {
+        const active = selectedTag === o.tag;
+        return (
+          <Link
+            key={o.tag}
+            href={`/members?type=${filterType}&tag=${encodeURIComponent(o.tag)}`}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition",
+              active
+                ? "border-[var(--al-accent)] bg-[var(--al-accent)] text-white shadow-sm"
+                : o.isMine
+                  ? "border-[color-mix(in_srgb,var(--al-accent)_35%,var(--al-border))] bg-[var(--al-accent-soft)] text-[var(--al-accent)] hover:border-[var(--al-accent)]"
+                  : "border-[var(--al-border)] bg-white text-[var(--al-ink)] hover:border-[color-mix(in_srgb,var(--al-accent)_30%,var(--al-border))]",
+            )}
+            title={
+              o.memberCount > 0
+                ? `${o.memberCount} 人がこのタグを持っています`
+                : undefined
+            }
+          >
+            {o.tag}
+            {o.memberCount > 0 && !active ? (
+              <span className="tabular-nums text-[9px] font-normal text-[var(--al-muted)]">
+                {o.memberCount}
+              </span>
+            ) : null}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 function TypeTab({
   label,
+  icon: Icon,
   type,
   current,
   selectedTag,
 }: {
   label: string;
+  icon: typeof Sparkles;
   type: FilterType;
   current: FilterType;
   selectedTag: string | null;
@@ -101,12 +174,13 @@ function TypeTab({
     <Link
       href={href}
       className={cn(
-        "flex-1 rounded-full px-3 py-1.5 text-center transition",
+        "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 transition",
         active
-          ? "bg-white text-slate-900 shadow-sm"
-          : "text-slate-500 hover:text-slate-700",
+          ? "bg-[var(--al-accent-soft)] text-[var(--al-accent)] shadow-sm"
+          : "text-[var(--al-muted)] hover:bg-[var(--al-surface)] hover:text-[var(--al-ink)]",
       )}
     >
+      <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
       {label}
     </Link>
   );

@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
   label: string;
+  icon?: LucideIcon;
   options: readonly string[];
   value: string[];
   onChange: (next: string[]) => void;
@@ -13,6 +15,7 @@ type Props = {
 
 export function TagPicker({
   label,
+  icon: Icon,
   options,
   value,
   onChange,
@@ -23,9 +26,19 @@ export function TagPicker({
   return (
     <div className="space-y-3">
       <div>
-        <div className="text-sm font-semibold text-slate-800">{label}</div>
+        <p
+          className={cn(
+            "flex items-center gap-1.5 text-sm font-semibold",
+            Icon ? "text-[var(--al-accent)]" : "text-[var(--al-ink)]",
+          )}
+        >
+          {Icon ? (
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+          ) : null}
+          {label}
+        </p>
         {hint ? (
-          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+          <p className="mt-1 text-xs text-[var(--al-muted)]">{hint}</p>
         ) : null}
       </div>
 
@@ -40,8 +53,8 @@ export function TagPicker({
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-medium transition",
                 selected
-                  ? "border-transparent bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-white shadow-sm"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-[#667eea]/40 hover:bg-slate-50",
+                  ? "border-transparent bg-[var(--al-accent)] text-white shadow-sm"
+                  : "border-[var(--al-border)] bg-white text-[var(--al-ink)] hover:border-[color-mix(in_srgb,var(--al-accent)_40%,var(--al-border))] hover:bg-[var(--al-accent-soft)]",
               )}
               onClick={() => {
                 if (selected) {
@@ -58,13 +71,15 @@ export function TagPicker({
       </div>
 
       {value.length > 0 ? (
-        <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
-          <div className="mb-2 text-xs font-medium text-slate-600">選択中</div>
+        <div className="rounded-xl border border-[var(--al-border)] bg-[var(--al-surface)] p-3">
+          <div className="mb-2 text-xs font-medium text-[var(--al-muted)]">
+            選択中
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {value.map((t) => (
               <span
                 key={t}
-                className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
+                className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[var(--al-ink)] ring-1 ring-[var(--al-border)]"
               >
                 {t}
               </span>
@@ -72,7 +87,7 @@ export function TagPicker({
           </div>
           <button
             type="button"
-            className="mt-2 text-xs font-medium text-[#667eea] underline-offset-2 hover:underline"
+            className="mt-2 text-xs font-medium text-[var(--al-accent)] underline-offset-2 hover:underline"
             onClick={() => onChange([])}
           >
             選択をクリア

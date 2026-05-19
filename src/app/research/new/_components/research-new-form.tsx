@@ -2,7 +2,13 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button";
+import {
+  AlignLeft,
+  FileUp,
+  FolderPlus,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,6 +35,11 @@ type ProjectOption = {
   id: string;
   name: string;
 };
+
+const fieldClass =
+  "al-auth-input shadow-none focus:ring-[var(--al-accent)]/20";
+
+const selectClass = cn(fieldClass, "h-12 appearance-none");
 
 export function ResearchNewForm({
   projects,
@@ -77,112 +88,171 @@ export function ResearchNewForm({
   }
 
   return (
-    <form
-      action={analyzeFormAction}
-      className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-    >
+    <form action={analyzeFormAction} className="al-glass-card overflow-hidden">
       <input type="hidden" name="input_type" value={mode} />
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="project_id">保存先プロジェクト</Label>
-          <button
-            type="button"
-            onClick={() => setUseNewProject((v) => !v)}
-            disabled={projects.length === 0}
-            className="text-xs font-medium text-[#5b3fbf] hover:underline"
-          >
-            {useNewProject ? "既存から選ぶ" : "新規プロジェクトを作る"}
-          </button>
+      <div className="divide-y divide-[var(--al-border)]">
+        <section className="space-y-4 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--al-ink)]">
+                保存先プロジェクト
+              </h2>
+              <p className="mt-0.5 text-xs text-[var(--al-muted)]">
+                研究投稿を紐づけるフォルダを選びます
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUseNewProject((v) => !v)}
+              disabled={projects.length === 0}
+              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--al-accent)] hover:underline disabled:opacity-40"
+            >
+              <FolderPlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {useNewProject ? "既存から選ぶ" : "新規プロジェクトを作る"}
+            </button>
+          </div>
+
+          {useNewProject ? (
+            <div className="space-y-2">
+              <Label htmlFor="new_project_name" className="text-[var(--al-ink)]">
+                プロジェクト名
+              </Label>
+              <Input
+                id="new_project_name"
+                name="new_project_name"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                required
+                minLength={2}
+                maxLength={80}
+                placeholder="例: LLMによる文献レビュー"
+                className={fieldClass}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="project_id" className="text-[var(--al-ink)]">
+                プロジェクト
+              </Label>
+              <select
+                id="project_id"
+                name="project_id"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                required
+                className={selectClass}
+              >
+                {projectId === "" ? (
+                  <option value="">プロジェクトを選択してください</option>
+                ) : null}
+                {projects.length === 0 ? (
+                  <option value="">
+                    プロジェクトがありません（新規作成してください）
+                  </option>
+                ) : (
+                  projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          )}
+
+          {useNewProject ? <input type="hidden" name="project_id" value="" /> : null}
+        </section>
+
+        <section className="space-y-4 p-5 sm:p-6">
+          <div>
+            <h2 className="text-sm font-semibold text-[var(--al-ink)]">
+              入力方法
+            </h2>
+            <p className="mt-0.5 text-xs text-[var(--al-muted)]">
+              PDF またはテキストのどちらかを選んでください
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ModeCard
+              active={mode === "pdf"}
+              icon={FileUp}
+              title="PDF をアップロード"
+              description="論文・スライドなど（最大 15MB）"
+              onClick={() => setMode("pdf")}
+            />
+            <ModeCard
+              active={mode === "text"}
+              icon={AlignLeft}
+              title="テキストを貼り付け"
+              description="概要・取り組み内容を直接入力"
+              onClick={() => setMode("text")}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4 p-5 sm:p-6">
+          {mode === "pdf" ? (
+            <>
+              <Label htmlFor="pdf" className="text-[var(--al-ink)]">
+                PDF ファイル
+              </Label>
+              <label
+                htmlFor="pdf"
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--al-border)] bg-[var(--al-surface)] px-4 py-10 text-center transition-colors hover:border-[color-mix(in_srgb,var(--al-accent)_40%,var(--al-border))] hover:bg-[var(--al-accent-soft)]/40"
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[var(--al-accent)] ring-1 ring-[var(--al-border)]">
+                  <FileUp className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+                </span>
+                <span className="text-sm font-medium text-[var(--al-ink)]">
+                  クリックしてファイルを選択
+                </span>
+                <span className="max-w-xs text-xs text-[var(--al-muted)]">
+                  図表中心の PDF も解析を試みます。結果は編集画面で必ず確認してください。
+                </span>
+                <Input
+                  id="pdf"
+                  name="pdf"
+                  type="file"
+                  accept="application/pdf"
+                  required
+                  className="sr-only"
+                />
+              </label>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="raw_text" className="text-[var(--al-ink)]">
+                研究テキスト
+              </Label>
+              <textarea
+                id="raw_text"
+                name="raw_text"
+                rows={12}
+                required
+                minLength={30}
+                className={cn(fieldClass, "min-h-[240px] resize-y py-3")}
+                placeholder="研究の概要・取り組みの内容などを貼り付けてください。"
+              />
+              <p className="text-xs text-[var(--al-muted)]">
+                最初の 4000 文字程度を AI に渡します。長すぎる場合は要点を貼ってください。
+              </p>
+            </div>
+          )}
+        </section>
+
+        {"error" in analyzeState && analyzeState.error ? (
+          <div className="px-5 sm:px-6">
+            <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {analyzeState.error}
+            </p>
+          </div>
+        ) : null}
+
+        <div className="flex justify-end bg-[var(--al-surface)]/80 px-5 py-4 sm:px-6">
+          <AnalyzeButton />
         </div>
-
-        {useNewProject ? (
-          <Input
-            id="new_project_name"
-            name="new_project_name"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            required
-            minLength={2}
-            maxLength={80}
-            placeholder="例: LLMによる文献レビュー"
-          />
-        ) : (
-          <select
-            id="project_id"
-            name="project_id"
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            required
-            className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
-          >
-            {projectId === "" ? (
-              <option value="">プロジェクトを選択してください</option>
-            ) : null}
-            {projects.length === 0 ? (
-              <option value="">プロジェクトがありません（新規作成してください）</option>
-            ) : (
-              projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))
-            )}
-          </select>
-        )}
-
-        {useNewProject ? <input type="hidden" name="project_id" value="" /> : null}
-      </div>
-
-      <div className="flex gap-2 rounded-full bg-slate-100 p-1 text-xs font-medium">
-        <ModeButton current={mode} value="pdf" onClick={() => setMode("pdf")}>
-          📄 PDFをアップロード
-        </ModeButton>
-        <ModeButton current={mode} value="text" onClick={() => setMode("text")}>
-          📝 テキストを貼り付け
-        </ModeButton>
-      </div>
-
-      {mode === "pdf" ? (
-        <div className="space-y-2">
-          <Label htmlFor="pdf">PDF ファイル</Label>
-          <Input
-            id="pdf"
-            name="pdf"
-            type="file"
-            accept="application/pdf"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            論文・スライドなど。最大 15MB / 図表中心の PDF も解析を試みます（結果は編集画面で必ず確認してください）。
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <Label htmlFor="raw_text">研究テキスト</Label>
-          <textarea
-            id="raw_text"
-            name="raw_text"
-            rows={10}
-            required
-            minLength={30}
-            className="w-full rounded-xl border border-input bg-white px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
-            placeholder="研究の概要・取り組みの内容などを貼り付けてください。"
-          />
-          <p className="text-xs text-muted-foreground">
-            最初の 4000 文字程度を AI に渡します。長すぎる場合は要点を貼ってください。
-          </p>
-        </div>
-      )}
-
-      {"error" in analyzeState && analyzeState.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {analyzeState.error}
-        </p>
-      ) : null}
-
-      <div className="flex justify-end">
-        <AnalyzeButton />
       </div>
     </form>
   );
@@ -204,105 +274,140 @@ function DraftEditor({
   const [tags, setTags] = useState(initial.draft.tags.join(", "));
 
   return (
-    <form
-      action={saveFormAction}
-      className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-    >
+    <form action={saveFormAction} className="al-glass-card overflow-hidden">
       <input type="hidden" name="raw_text" value={initial.rawText} />
       <input type="hidden" name="project_id" value={initial.projectId} />
       <input type="hidden" name="file_name" value={initial.fileName ?? ""} />
       <input type="hidden" name="pdf_path" value={initial.pdfPath ?? ""} />
 
-      <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3 text-xs text-[#5b3fbf]">
-        🤖 AI が下書きを生成しました。内容を確認・修正してから保存してください。
-        <span className="ml-1">（保存先: <span className="font-semibold">{initial.projectName}</span>）</span>
-        {initial.fileName ? (
-          <span className="ml-1">
-            （添付:{" "}
-            <span className="font-mono text-[#3d2a8a]">{initial.fileName}</span>）
+      <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6">
+        <div className="flex gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--al-accent)] ring-1 ring-[var(--al-border)]">
+            <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           </span>
+          <div className="min-w-0 text-sm leading-relaxed text-[var(--al-ink)]">
+            <p className="font-medium">AI が下書きを生成しました</p>
+            <p className="mt-1 text-xs text-[var(--al-muted)]">
+              内容を確認・修正してから保存してください。
+              <span className="text-[var(--al-ink)]">
+                {" "}
+                保存先: {initial.projectName}
+              </span>
+              {initial.fileName ? (
+                <span className="font-mono"> / {initial.fileName}</span>
+              ) : null}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="divide-y divide-[var(--al-border)]">
+        <section className="space-y-4 p-5 sm:p-6">
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-[var(--al-ink)]">
+              タイトル
+            </Label>
+            <Input
+              id="title"
+              name="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="summary" className="text-[var(--al-ink)]">
+              要約
+            </Label>
+            <textarea
+              id="summary"
+              name="summary"
+              rows={8}
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              required
+              className={cn(fieldClass, "min-h-[180px] resize-y py-3")}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tags" className="text-[var(--al-ink)]">
+              タグ（カンマ区切り）
+            </Label>
+            <Input
+              id="tags"
+              name="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="例: 機械学習, Python, 自然言語処理"
+              className={fieldClass}
+            />
+          </div>
+        </section>
+
+        {saveState.error ? (
+          <div className="px-5 sm:px-6">
+            <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {saveState.error}
+            </p>
+          </div>
         ) : null}
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="title">タイトル</Label>
-        <Input
-          id="title"
-          name="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="summary">要約</Label>
-        <textarea
-          id="summary"
-          name="summary"
-          rows={6}
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-          required
-          className="w-full rounded-xl border border-input bg-white px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#667eea]/30"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="tags">タグ（カンマ区切り）</Label>
-        <Input
-          id="tags"
-          name="tags"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="例: 機械学習, Python, 自然言語処理"
-        />
-      </div>
-
-      {saveState.error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {saveState.error}
-        </p>
-      ) : null}
-
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-md px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-        >
-          やり直す
-        </button>
-        <SaveButton />
+        <div className="flex flex-wrap items-center justify-end gap-2 bg-[var(--al-surface)]/80 px-5 py-4 sm:px-6">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--al-muted)] transition hover:bg-white hover:text-[var(--al-ink)]"
+          >
+            やり直す
+          </button>
+          <SaveButton />
+        </div>
       </div>
     </form>
   );
 }
 
-function ModeButton({
-  current,
-  value,
+function ModeCard({
+  active,
+  icon: Icon,
+  title,
+  description,
   onClick,
-  children,
 }: {
-  current: Mode;
-  value: Mode;
+  active: boolean;
+  icon: typeof FileUp;
+  title: string;
+  description: string;
   onClick: () => void;
-  children: React.ReactNode;
 }) {
-  const active = current === value;
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "flex-1 rounded-full px-3 py-1.5 transition",
+        "flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all",
         active
-          ? "bg-white text-slate-900 shadow-sm"
-          : "text-slate-500 hover:text-slate-700",
+          ? "border-[color-mix(in_srgb,var(--al-accent)_45%,var(--al-border))] bg-[var(--al-accent-soft)]/50 shadow-sm ring-1 ring-[var(--al-accent)]/25"
+          : "border-[var(--al-border)] bg-white hover:border-[color-mix(in_srgb,var(--al-accent)_25%,var(--al-border))] hover:bg-[var(--al-surface)]",
       )}
     >
-      {children}
+      <span
+        className={cn(
+          "flex h-9 w-9 items-center justify-center rounded-lg ring-1",
+          active
+            ? "bg-white text-[var(--al-accent)] ring-[var(--al-border)]"
+            : "bg-[var(--al-surface)] text-[var(--al-muted)] ring-[var(--al-border)]",
+        )}
+      >
+        <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+      </span>
+      <span className="text-sm font-semibold text-[var(--al-ink)]">{title}</span>
+      <span className="text-xs leading-relaxed text-[var(--al-muted)]">
+        {description}
+      </span>
     </button>
   );
 }
@@ -310,25 +415,42 @@ function ModeButton({
 function AnalyzeButton() {
   const { pending } = useFormStatus();
   return (
-    <Button
+    <button
       type="submit"
-      className="h-11 min-w-[12rem] bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] font-semibold text-white shadow-md hover:shadow-lg hover:brightness-110 disabled:opacity-60"
       disabled={pending}
+      className="al-btn-gradient inline-flex h-11 min-w-[11rem] items-center justify-center gap-2 px-5 text-sm disabled:opacity-60"
     >
-      {pending ? "AI が分析中…" : "🤖 AI解析を開始"}
-    </Button>
+      {pending ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          AI が分析中…
+        </>
+      ) : (
+        <>
+          <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+          AI 解析を開始
+        </>
+      )}
+    </button>
   );
 }
 
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <Button
+    <button
       type="submit"
-      className="h-10 min-w-[8rem] bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-sm font-semibold text-white shadow-md hover:shadow-lg hover:brightness-110 disabled:opacity-60"
       disabled={pending}
+      className="al-btn-gradient inline-flex h-10 min-w-[8rem] items-center justify-center gap-2 px-4 text-sm disabled:opacity-60"
     >
-      {pending ? "保存中…" : "公開して保存"}
-    </Button>
+      {pending ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          保存中…
+        </>
+      ) : (
+        "公開して保存"
+      )}
+    </button>
   );
 }

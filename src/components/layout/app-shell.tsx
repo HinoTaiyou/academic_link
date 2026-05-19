@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { GraduationCap, Menu, X } from "lucide-react";
 import { AppSidebar, type SidebarProfile } from "@/components/layout/app-sidebar";
 
 type Props = {
@@ -31,7 +31,7 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
   }, [open]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200">
+    <div className="al-page-mesh min-h-screen">
       <div className="fixed inset-y-0 left-0 z-20 hidden w-60 sm:block">
         <AppSidebar profile={profile} active={active} quickProjects={quickProjects} />
       </div>
@@ -46,8 +46,8 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <span className="flex items-center gap-1 text-sm font-bold text-slate-900">
-            <span>🎓</span>
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+            <GraduationCap className="h-4 w-4 text-[var(--al-accent)]" strokeWidth={1.75} aria-hidden />
             <span>Academic Link</span>
           </span>
           <span className="w-9" aria-hidden />
@@ -74,7 +74,7 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
               type="button"
               aria-label="メニューを閉じる"
               onClick={() => setOpen(false)}
-              className="absolute right-2 top-2 rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+              className="absolute right-2 top-2 rounded-md p-1 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900"
             >
               <X className="h-5 w-5" />
             </button>

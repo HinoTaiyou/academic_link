@@ -1,41 +1,52 @@
 import Link from "next/link";
+import { DefaultAvatar } from "@/components/profile/default-avatar";
 import type { Conversation } from "../_lib/queries";
+import { cn } from "@/lib/utils";
 
 type Props = {
   conversation: Conversation;
 };
 
 export function ConversationItem({ conversation: c }: Props) {
-  const initial = (c.partnerName.slice(0, 1) || "?").toUpperCase();
   const preview =
     (c.lastMessageFromMe ? "自分: " : "") +
-    (c.lastMessage.length > 50
-      ? c.lastMessage.slice(0, 50) + "…"
+    (c.lastMessage.length > 56
+      ? c.lastMessage.slice(0, 56) + "…"
       : c.lastMessage);
 
   return (
     <Link
       href={`/chat/${c.partnerId}`}
-      className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#667eea]/40 hover:shadow-md"
+      className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--al-surface)] sm:px-5"
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-base font-bold text-white shadow-sm">
-        {initial}
-      </div>
+      <DefaultAvatar className="h-11 w-11" />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-sm font-semibold text-slate-900 group-hover:text-[#667eea]">
+          <p className="truncate text-sm font-medium text-[var(--al-ink)] group-hover:text-[var(--al-accent)]">
             {c.partnerName}
           </p>
-          <time className="shrink-0 text-[11px] text-slate-400">
+          <time
+            dateTime={c.lastMessageAt}
+            className="shrink-0 text-[11px] text-[var(--al-muted)]"
+          >
             {formatRelative(c.lastMessageAt)}
           </time>
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-xs text-slate-500">{preview}</p>
+        <div className="mt-0.5 flex items-center justify-between gap-2">
+          <p
+            className={cn(
+              "truncate text-xs",
+              c.unreadCount > 0
+                ? "font-medium text-[var(--al-ink)]"
+                : "text-[var(--al-muted)]",
+            )}
+          >
+            {preview}
+          </p>
           {c.unreadCount > 0 ? (
-            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#667eea] px-1.5 text-[10px] font-bold text-white">
-              {c.unreadCount}
+            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[var(--al-accent)] px-1.5 text-[10px] font-semibold text-white">
+              {c.unreadCount > 9 ? "9+" : c.unreadCount}
             </span>
           ) : null}
         </div>

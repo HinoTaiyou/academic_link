@@ -10,8 +10,11 @@ export type ProfileProjectCard = {
   docSummary: string | null;
   docTags: string[];
   figureCount: number;
+  fileCount: number;
   qaResearchPostId: string | null;
   qaProjectId: string | null;
+  /** プロジェクト詳細へのリンク（レガシー投稿のみ null） */
+  viewHref: string | null;
 };
 
 type ResearchRow = {
@@ -45,8 +48,10 @@ function legacyPostCards(rows: ResearchRow[]): ProfileProjectCard[] {
     docSummary: r.summary,
     docTags: r.tags,
     figureCount: 0,
+    fileCount: 1,
     qaResearchPostId: r.id,
     qaProjectId: null,
+    viewHref: null,
   }));
 }
 
@@ -92,10 +97,12 @@ export async function loadProfileProjectCards(
   const projectFiles = projectFilesRes.data ?? [];
 
   const latestByProject = new Map<string, (typeof projectFiles)[number]>();
+  const fileCountByProject = new Map<string, number>();
   for (const row of projectFiles) {
     const pid = String(row.project_id ?? "");
-    if (!pid || latestByProject.has(pid)) continue;
-    latestByProject.set(pid, row);
+    if (!pid) continue;
+    fileCountByProject.set(pid, (fileCountByProject.get(pid) ?? 0) + 1);
+    if (!latestByProject.has(pid)) latestByProject.set(pid, row);
   }
 
   const postByProject = new Map<string, ResearchRow>();
@@ -131,10 +138,26 @@ export async function loadProfileProjectCards(
       docSummary: doc?.summary ?? linked?.summary ?? null,
       docTags: (doc?.tags as string[] | null) ?? linked?.tags ?? [],
       figureCount,
+      fileCount: fileCountByProject.get(p.id) ?? (linked ? 1 : 0),
       qaResearchPostId,
       qaProjectId,
+      viewHref: `/projects/${p.id}`,
     };
   });
+}
+
+export function folderSubtitle(item: {
+  description: string;
+  docTags: string[];
+}): string {
+  const tags = item.docTags
+    .slice(0, 3)
+    .map((t) => t.replace(/^#/, "").toUpperCase())
+    .join(", ");
+  if (tags) return tags;
+  const desc = item.description.trim();
+  if (desc) return desc.slice(0, 48).toUpperCase();
+  return "RESEARCH PROJECT";
 }
 
 export function toOwnerDashboardItems(cards: ProfileProjectCard[]) {

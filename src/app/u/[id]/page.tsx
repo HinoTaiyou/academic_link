@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FolderOpen, MessageSquare, Pencil } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProfileView } from "./_components/profile-view";
@@ -94,21 +95,23 @@ export default async function UserProfilePage({ params }: Props) {
       <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 md:py-10">
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-xl font-bold text-slate-900">プロフィール</h1>
+            <h1 className="text-xl font-bold text-[var(--al-ink)]">プロフィール</h1>
             <div className="flex gap-2">
               {!isMe ? (
                 <Link
                   href={`/chat/${profile.id}`}
-                  className="rounded-md bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:shadow-md hover:brightness-110"
+                  className="al-btn-gradient inline-flex items-center gap-1.5 text-xs sm:text-sm"
                 >
-                  💬 メッセージを送る
+                  <MessageSquare className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                  メッセージを送る
                 </Link>
               ) : null}
               {isMe ? (
                 <Link
                   href="/profile"
-                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
+                  className="al-btn-outline inline-flex items-center gap-1.5 text-xs sm:text-sm"
                 >
+                  <Pencil className="h-4 w-4" strokeWidth={1.75} aria-hidden />
                   編集する
                 </Link>
               ) : null}
@@ -116,37 +119,78 @@ export default async function UserProfilePage({ params }: Props) {
           </div>
 
           <ProfileView
-            profile={{
-              id: profile.id,
-              realName: profile.real_name,
-              department: profile.department,
-              grade: profile.grade,
-              interestTags: profile.interest_tags ?? [],
-              researchFields: profile.research_fields ?? [],
-            }}
-          />
+          profile={{
+            id: profile.id,
+            realName: profile.real_name,
+            department: profile.department,
+            grade: profile.grade,
+            interestTags: profile.interest_tags ?? [],
+            researchFields: profile.research_fields ?? [],
+          }}
+        />
 
-          {isMe ? (
-            <ProjectDashboardSection items={ownerDashboardItems} />
-          ) : (
-            <section className="space-y-3">
-              <div className="flex items-end justify-between gap-3">
+        {isMe ? (
+          <section className="al-glass-card">
+            <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--al-accent)] shadow-sm ring-1 ring-[var(--al-border)]">
+                  <FolderOpen
+                    className="h-5 w-5"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                </span>
                 <div>
-                  <h2 className="text-base font-semibold text-slate-900">
-                    📁 プロジェクトダッシュボード
+                  <p className="al-section-eyebrow">Files</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--al-ink)]">
+                    プロジェクト・資料
                   </h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {profileDisplayName}
-                    さんの研究プロジェクトと最新資料です。
+                  <p className="mt-1 text-sm text-[var(--al-muted)]">
+                    あなたの研究プロジェクトと登録資料です。
                   </p>
                 </div>
               </div>
+            </div>
+            <div className="overflow-visible bg-[var(--al-surface)]/40 p-4 pt-3 sm:p-6 sm:pt-4">
+              <ProjectDashboardSection
+                items={ownerDashboardItems}
+                showHeader={false}
+                compact
+              />
+            </div>
+          </section>
+        ) : (
+          <section className="al-glass-card">
+            <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--al-accent)] shadow-sm ring-1 ring-[var(--al-border)]">
+                  <FolderOpen
+                    className="h-5 w-5"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                </span>
+                <div>
+                  <p className="al-section-eyebrow">Files</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--al-ink)]">
+                    プロジェクト・資料
+                  </h2>
+                  <p className="mt-1 text-sm text-[var(--al-muted)]">
+                    {profileDisplayName}
+                    さんの研究プロジェクトと登録資料です。
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="overflow-visible bg-[var(--al-surface)]/40 p-4 pt-3 sm:p-6 sm:pt-4">
               <ProjectDashboardBrowse
                 items={projectCards}
                 authorName={profileDisplayName}
+                compact
               />
-            </section>
-          )}
+            </div>
+          </section>
+        )}
         </div>
       </div>
     </AppShell>

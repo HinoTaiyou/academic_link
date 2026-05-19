@@ -1,4 +1,15 @@
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  FlaskConical,
+  GraduationCap,
+  Home,
+  LogOut,
+  MessageSquare,
+  Pin,
+  Search,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
@@ -17,129 +28,100 @@ type NavKey = "dashboard" | "profile" | "members" | "research" | "chat";
 type Props = {
   profile: SidebarProfile;
   active?: NavKey;
-  /** モバイルドロワー利用時：閉じる用に追加クラスを指定可 */
   className?: string;
   quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
 };
 
-export function AppSidebar({ profile, active, className, quickProjects }: Props) {
-  const displayName =
-    profile.realName?.trim() || profile.email || "ユーザー";
-  const initial = displayName.slice(0, 1).toUpperCase();
-  const sub = [profile.department, profile.grade].filter(Boolean).join(" / ");
+const NAV_ITEMS: Array<{
+  key: NavKey;
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}> = [
+  { key: "dashboard", href: "/dashboard", label: "ホーム", icon: Home },
+  { key: "research", href: "/research/new", label: "研究を登録", icon: FlaskConical },
+  { key: "chat", href: "/chat", label: "チャット", icon: MessageSquare },
+  { key: "members", href: "/members", label: "メンバー検索", icon: Search },
+];
 
+export function AppSidebar({ profile, active, className, quickProjects }: Props) {
   return (
     <aside
       className={cn(
-        "flex h-full w-full flex-col gap-4 bg-[linear-gradient(180deg,#1f1147_0%,#2b1a5a_100%)] p-5 text-slate-100",
+        "flex h-full w-full flex-col border-r border-[color-mix(in_srgb,var(--al-accent)_18%,var(--al-border))] bg-[linear-gradient(180deg,#f8ebe6_0%,var(--al-accent-soft)_45%,#f5ebe6_100%)] px-4 pb-5 pt-8 text-[var(--al-ink)]",
         className,
       )}
     >
       <Link
         href="/dashboard"
-        className="flex items-center gap-2 text-base font-bold text-white"
+        className="mt-1 flex items-center gap-2.5 px-2 text-[15px] font-semibold tracking-tight text-[var(--al-ink)]"
       >
-        <span className="text-xl">🎓</span>
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/70 text-[var(--al-accent)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--al-accent)_15%,var(--al-border))]">
+          <GraduationCap className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        </span>
         <span>Academic Link</span>
       </Link>
 
-      <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-base font-bold text-white shadow">
-            {initial}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">
-              {displayName}
-            </p>
-            {sub ? (
-              <p className="truncate text-[11px] text-slate-300">{sub}</p>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">
-            興味タグ
-          </p>
-          {profile.interestTags.length === 0 ? (
-            <p className="mt-1 text-[11px] text-slate-400">未設定</p>
-          ) : (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {profile.interestTags.slice(0, 8).map((t) => (
-                <span
-                  key={t}
-                  className="rounded-full border border-white/30 bg-white/10 px-2 py-0.5 text-[10.5px] font-medium text-white"
-                >
-                  #{t.replace(/^#/, "")}
-                </span>
-              ))}
-              {profile.interestTags.length > 8 ? (
-                <span className="text-[10.5px] text-slate-300">
-                  +{profile.interestTags.length - 8}
-                </span>
-              ) : null}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <nav className="mt-2 flex flex-col gap-1">
-        <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          メニュー
+      <nav className="mt-6 flex flex-1 flex-col gap-0.5 overflow-y-auto">
+        <p className="mb-2 px-2 text-xs font-medium text-[var(--al-muted)]">
+          一般
         </p>
-        <NavItem href="/dashboard" icon="🏠" active={active === "dashboard"}>
-          ホーム
-        </NavItem>
-        <NavItem
-          href="/research/new"
-          icon="📝"
-          active={active === "research"}
-        >
-          研究を登録
-        </NavItem>
-        <NavItem href="/chat" icon="💬" active={active === "chat"}>
-          チャット
-        </NavItem>
-        <NavItem href="/members" icon="🔍" active={active === "members"}>
-          メンバー検索
-        </NavItem>
+        {NAV_ITEMS.map((item) => (
+          <NavItem
+            key={item.key}
+            href={item.href}
+            icon={item.icon}
+            active={active === item.key}
+          >
+            {item.label}
+          </NavItem>
+        ))}
         <NavItem
           href={`/u/${profile.id}`}
-          icon="👤"
+          icon={User}
           active={active === "profile"}
         >
           プロフィール
         </NavItem>
+
         {quickProjects && quickProjects.length > 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="px-1 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-300">
-              研究のショートカット
+          <>
+            <p className="mb-2 mt-6 px-2 text-xs font-medium text-[var(--al-muted)]">
+              プロジェクト
             </p>
-            <div className="space-y-1">
-              {quickProjects.slice(0, 6).map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/research/new?projectId=${project.id}`}
-                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-200 hover:bg-white/10 hover:text-white"
-                >
-                  <span className="min-w-0 truncate">{project.name}</span>
-                  {project.pinned ? <span className="text-xs text-violet-300">📌</span> : null}
-                </Link>
-              ))}
-            </div>
-          </div>
+            {quickProjects.slice(0, 6).map((project) => (
+              <Link
+                key={project.id}
+                href={`/research/new?projectId=${project.id}`}
+                className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-[var(--al-muted)] transition-colors hover:bg-white/80 hover:text-[var(--al-ink)]"
+              >
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full bg-[var(--al-accent)] opacity-70"
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1 truncate">{project.name}</span>
+                {project.pinned ? (
+                  <Pin
+                    className="h-3.5 w-3.5 shrink-0 text-[var(--al-accent)]"
+                    strokeWidth={1.75}
+                    aria-label="ピン留め"
+                  />
+                ) : null}
+              </Link>
+            ))}
+          </>
         ) : null}
       </nav>
 
-      <div className="mt-auto pt-4">
+      <div className="mt-4 border-t border-[color-mix(in_srgb,var(--al-accent)_12%,var(--al-border))] pt-4">
         <form action={logoutAction}>
           <Button
             type="submit"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full border-white/20 bg-white/0 text-white hover:bg-white/10 hover:text-white"
+            className="h-9 w-full justify-start gap-2.5 px-2 text-sm font-normal text-[var(--al-muted)] hover:bg-white/80 hover:text-[var(--al-ink)]"
           >
+            <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden />
             ログアウト
           </Button>
         </form>
@@ -150,40 +132,36 @@ export function AppSidebar({ profile, active, className, quickProjects }: Props)
 
 function NavItem({
   href,
-  icon,
+  icon: Icon,
   active,
   disabled,
-  hint,
   children,
 }: {
   href?: string;
-  icon: string;
+  icon: LucideIcon;
   active?: boolean;
   disabled?: boolean;
-  hint?: string;
   children: React.ReactNode;
 }) {
   const base =
-    "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors";
+    "flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm transition-colors";
   const stateCls = disabled
-    ? "cursor-not-allowed text-slate-400"
+    ? "cursor-not-allowed text-[var(--al-muted)] opacity-50"
     : active
-      ? "bg-white/15 font-semibold text-white"
-      : "text-slate-200 hover:bg-white/10 hover:text-white";
+      ? "bg-white font-medium text-[var(--al-ink)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--al-accent)_25%,var(--al-border))]"
+      : "font-normal text-[var(--al-muted)] hover:bg-white/80 hover:text-[var(--al-ink)]";
 
   const content = (
     <>
-      <span className="flex items-center gap-2">
-        <span aria-hidden className="text-base leading-none">
-          {icon}
-        </span>
-        <span>{children}</span>
-      </span>
-      {hint ? (
-        <span className="text-[10px] uppercase tracking-wider text-slate-400">
-          {hint}
-        </span>
-      ) : null}
+      <Icon
+        className={cn(
+          "h-4 w-4 shrink-0",
+          active ? "text-[var(--al-accent)]" : "text-[var(--al-muted)]",
+        )}
+        strokeWidth={1.75}
+        aria-hidden
+      />
+      <span>{children}</span>
     </>
   );
 

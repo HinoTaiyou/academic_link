@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ChevronLeft, User } from "lucide-react";
+import { DefaultAvatar } from "@/components/profile/default-avatar";
 import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { ChatMessages } from "./_components/chat-messages";
@@ -23,7 +25,6 @@ export default async function ChatRoomPage({ params }: Props) {
 
   if (!user) redirect("/login");
 
-  // Don't allow chatting with yourself
   if (partnerId === user.id) redirect("/chat");
 
   const [{ data: partnerProfile }, { data: myProfile }, { data: rawMessages }] =
@@ -51,7 +52,6 @@ export default async function ChatRoomPage({ params }: Props) {
 
   const partnerName =
     (partnerProfile.real_name as string)?.trim() || "（名前未設定）";
-
   const messages: MessageData[] = (rawMessages ?? []).map((m) => ({
     id: m.id as string,
     fromId: m.from_id as string,
@@ -72,47 +72,39 @@ export default async function ChatRoomPage({ params }: Props) {
         email: user.email ?? null,
       }}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
-        {/* Chat header */}
-        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-          <Link
-            href="/chat"
-            className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      <div className="flex min-h-0 flex-1 flex-col bg-[var(--al-surface)]">
+        <header className="sticky top-0 z-10 border-b border-[var(--al-border)] bg-white/90 px-3 py-3 backdrop-blur sm:px-5">
+          <div className="mx-auto flex max-w-3xl items-center gap-3">
+            <Link
+              href="/chat"
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-[var(--al-muted)] transition hover:bg-[var(--al-surface)] hover:text-[var(--al-ink)]"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            戻る
-          </Link>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-sm font-bold text-white">
-            {partnerName.slice(0, 1)}
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              <span className="hidden sm:inline">一覧</span>
+            </Link>
+
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <DefaultAvatar className="h-10 w-10" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-[var(--al-ink)]">
+                  {partnerName}
+                </p>
+                {partnerProfile.department ? (
+                  <p className="truncate text-xs text-[var(--al-muted)]">
+                    {partnerProfile.department as string}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <Link
+              href={`/u/${partnerId}`}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-[var(--al-accent)] transition hover:bg-[var(--al-accent-soft)]"
+            >
+              <User className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              プロフィール
+            </Link>
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">
-              {partnerName}
-            </p>
-            {partnerProfile.department ? (
-              <p className="truncate text-[11px] text-slate-500">
-                {partnerProfile.department}
-              </p>
-            ) : null}
-          </div>
-          <Link
-            href={`/u/${partnerId}`}
-            className="ml-auto text-[11px] font-medium text-[#667eea] hover:underline"
-          >
-            プロフィール
-          </Link>
         </header>
 
         <ChatMessages

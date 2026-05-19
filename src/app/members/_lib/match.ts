@@ -17,13 +17,27 @@ export type ScoredMember = Omit<
   researchOverlap: number;
 };
 
-function normTag(t: string): string {
+export function normTag(t: string): string {
   return t.replace(/^#/, "").trim();
 }
 
-export function countOverlap(a: string[], b: string[]): number {
-  const setB = new Set(b.map(normTag));
-  return a.filter((x) => setB.has(normTag(x))).length;
+export function isSharedTag(
+  tag: string,
+  myTags: readonly string[] | null | undefined,
+): boolean {
+  const key = normTag(tag);
+  if (!key || !myTags?.length) return false;
+  return myTags.some((mine) => normTag(mine) === key);
+}
+
+export function countOverlap(
+  a: readonly string[] | null | undefined,
+  b: readonly string[] | null | undefined,
+): number {
+  const listA = a ?? [];
+  const listB = b ?? [];
+  const setB = new Set(listB.map(normTag));
+  return listA.filter((x) => setB.has(normTag(x))).length;
 }
 
 export function scoreMember(

@@ -1,10 +1,13 @@
+import { ArrowUpRight } from "lucide-react";
 import type { NewsItem } from "../_lib/news";
+import { cn } from "@/lib/utils";
 
 type Props = {
   item: NewsItem;
+  featured?: boolean;
 };
 
-export function NewsCard({ item }: Props) {
+export function NewsCard({ item, featured = false }: Props) {
   const titleText = normalizeNewsPlainText(item.title);
   const snippet = normalizeNewsPlainText(item.description);
 
@@ -13,42 +16,73 @@ export function NewsCard({ item }: Props) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex h-full min-h-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#667eea]/40 hover:shadow-md sm:p-5"
+      className={cn(
+        "group relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--al-border)] bg-white transition-all",
+        "hover:border-[color-mix(in_srgb,var(--al-accent)_35%,var(--al-border))] hover:shadow-[0_8px_28px_-8px_rgba(201,107,74,0.15)]",
+        featured ? "sm:flex-row sm:gap-0" : "",
+      )}
     >
-      <div className="flex min-h-0 items-start gap-3">
-        <span aria-hidden className="mt-0.5 shrink-0 text-2xl leading-none">
-          {item.icon}
-        </span>
-        <h3 className="line-clamp-3 text-sm font-semibold leading-snug text-slate-900 group-hover:text-[#667eea]">
-          {titleText}
-        </h3>
-      </div>
+      <span
+        className="absolute inset-y-0 left-0 w-1 bg-[var(--al-accent)] opacity-0 transition-opacity group-hover:opacity-100"
+        aria-hidden
+      />
 
-      {snippet ? (
-        <p className="line-clamp-3 text-xs leading-relaxed text-slate-600">
-          {snippet}
-        </p>
-      ) : null}
-
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-        {item.relatedTags.slice(0, 4).map((t) => (
-          <span
-            key={t}
-            className="rounded-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] px-2.5 py-0.5 text-[11px] font-medium text-white"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between text-[11px] text-slate-500">
-        <span className="truncate">{item.source}</span>
+      <div
+        className={cn(
+          "flex flex-1 flex-col gap-3 p-4 sm:p-5",
+          featured && "sm:pr-4",
+        )}
+      >
         {item.publishedAt ? (
-          <time dateTime={item.publishedAt} className="shrink-0">
+          <time
+            dateTime={item.publishedAt}
+            className="text-[11px] text-[var(--al-muted)]"
+          >
             {formatPublishedAt(item.publishedAt)}
           </time>
         ) : null}
+
+        <h3
+          className={cn(
+            "line-clamp-3 font-semibold leading-snug text-[var(--al-ink)] transition-colors group-hover:text-[var(--al-accent)]",
+            featured ? "text-base sm:text-lg" : "text-sm",
+          )}
+        >
+          {titleText}
+        </h3>
+
+        {snippet ? (
+          <p
+            className={cn(
+              "line-clamp-3 leading-relaxed text-[var(--al-muted)]",
+              featured ? "text-sm" : "text-xs",
+            )}
+          >
+            {snippet}
+          </p>
+        ) : null}
+
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            {item.relatedTags.slice(0, featured ? 5 : 3).map((t) => (
+              <span key={t} className="al-tag-pill">
+                #{t.replace(/^#/, "")}
+              </span>
+            ))}
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-[var(--al-accent)] opacity-0 transition-opacity group-hover:opacity-100">
+            読む
+            <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+          </span>
+        </div>
       </div>
+
+      {featured ? (
+        <div
+          className="hidden w-28 shrink-0 bg-[linear-gradient(160deg,var(--al-accent-soft)_0%,#fff_70%)] sm:block"
+          aria-hidden
+        />
+      ) : null}
     </a>
   );
 }

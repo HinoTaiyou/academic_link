@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import ProjectEditModal from "@/components/projects/project-edit-modal";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -40,35 +41,61 @@ export default async function ProjectDetailPage({ params }: Props) {
     redirect("/login");
   }
 
-  const [{ data: profile }, { data: project }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("real_name, department, grade, interest_tags")
-      .eq("id", user.id)
-      .maybeSingle(),
-    supabase
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("real_name, department, grade, interest_tags")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  let project: {
+    id: string;
+    name: string;
+    description: string | null;
+    pinned: boolean;
+    created_at: string;
+    updated_at: string;
+    owner_id: string;
+  } | null = null;
+
+  const ownProjectRes = await supabase
+    .from("projects")
+    .select("id, name, description, pinned, created_at, updated_at, owner_id")
+    .eq("id", projectId)
+    .eq("owner_id", user.id)
+    .eq("archived", false)
+    .maybeSingle();
+
+  if (ownProjectRes.data) {
+    project = ownProjectRes.data;
+  } else {
+    const readClient = createAdminClient() ?? supabase;
+    const publicRes = await readClient
       .from("projects")
-      .select("id, name, description, pinned, created_at, updated_at")
+      .select("id, name, description, pinned, created_at, updated_at, owner_id")
       .eq("id", projectId)
-      .eq("owner_id", user.id)
       .eq("archived", false)
-      .maybeSingle(),
-  ]);
+      .maybeSingle();
+    project = publicRes.data ?? null;
+  }
 
   if (!project) notFound();
+
+  const ownerId = project.owner_id;
+  const isOwner = ownerId === user.id;
+  const dataClient = isOwner ? supabase : (createAdminClient() ?? supabase);
 
   let fileRows: Array<Record<string, unknown>> = [];
   let fileFetchNotice: string | null = null;
   const debugErrorDetails: string[] = [];
 
   // Try primary project_files query
-  const primaryFilesRes = await supabase
+  const primaryFilesRes = await dataClient
     .from("project_files")
     .select(
       "id, created_at, source_type, title, summary, tags, raw_text, file_name, storage_path, mime_type, figure_notes",
     )
     .eq("project_id", projectId)
-    .eq("owner_id", user.id)
+    .eq("owner_id", ownerId)
     .order("created_at", { ascending: false });
 
   if (!primaryFilesRes.error) {
@@ -76,7 +103,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   } else {
     debugErrorDetails.push(String(primaryFilesRes.error?.message ?? primaryFilesRes.error));
 
-    const fallbackFilesRes = await supabase
+    const fallbackFilesRes = await dataClient
       .from("project_files")
       .select(
         "id, created_at, source_type, title, summary, tags, raw_text, file_name, storage_path, mime_type",
@@ -91,10 +118,10 @@ export default async function ProjectDetailPage({ params }: Props) {
     } else {
       debugErrorDetails.push(String(fallbackFilesRes.error?.message ?? fallbackFilesRes.error));
 
-      const postsFallbackRes = await supabase
+      const postsFallbackRes = await dataClient
         .from("research_posts")
         .select("id, created_at, title, summary, tags, raw_text, file_name, pdf_path")
-        .eq("author_id", user.id)
+        .eq("author_id", ownerId)
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
 
@@ -140,7 +167,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const signedEntries = await Promise.all(
     files.map(async (file) => {
       if (!file.storagePath) return [file.id, null] as const;
-      const { data, error } = await supabase.storage
+      const { data, error } = await dataClient.storage
         .from(BUCKET)
         .createSignedUrl(file.storagePath, 60 * 10);
       if (error || !data) return [file.id, null] as const;
@@ -168,7 +195,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
             <Link
-              href={`/u/${user.id}`}
+              href={`/u/${ownerId}`}
               className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
             >
               ← プロフィールに戻る
@@ -180,9 +207,14 @@ export default async function ProjectDetailPage({ params }: Props) {
               ) : (
                 <p className="text-sm text-slate-400">説明は未設定です。</p>
               )}
-              <div className="mt-0.5">
-                <ProjectEditModal projectId={project.id} initialDescription={project.description} />
-              </div>
+              {isOwner ? (
+                <div className="mt-0.5">
+                  <ProjectEditModal
+                    projectId={project.id}
+                    initialDescription={project.description}
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               {project.pinned ? (
@@ -195,12 +227,14 @@ export default async function ProjectDetailPage({ params }: Props) {
               <span>資料: {files.length}件</span>
             </div>
           </div>
-          <Link
-            href={`/research/new?projectId=${project.id}`}
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
-          >
-            ＋ このプロジェクトに研究を追加
-          </Link>
+          {isOwner ? (
+            <Link
+              href={`/research/new?projectId=${project.id}`}
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-[#667eea]/40 hover:text-[#667eea]"
+            >
+              ＋ このプロジェクトに研究を追加
+            </Link>
+          ) : null}
         </div>
 
         <section className="space-y-3">
@@ -215,7 +249,9 @@ export default async function ProjectDetailPage({ params }: Props) {
           ) : null}
           {files.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-muted-foreground">
-              まだ資料がありません。右上のボタンからこのプロジェクトに研究を追加してください。
+              {isOwner
+                ? "まだ資料がありません。右上のボタンからこのプロジェクトに研究を追加してください。"
+                : "まだ公開されている資料がありません。"}
             </p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
@@ -281,12 +317,14 @@ export default async function ProjectDetailPage({ params }: Props) {
                           PDFを開く
                         </a>
                       ) : null}
-                      <Link
-                        href={`/research/new?projectId=${project.id}`}
-                        className="text-xs font-medium text-slate-600 hover:text-[#667eea]"
-                      >
-                        このプロジェクトに追加 →
-                      </Link>
+                      {isOwner ? (
+                        <Link
+                          href={`/research/new?projectId=${project.id}`}
+                          className="text-xs font-medium text-slate-600 hover:text-[#667eea]"
+                        >
+                          このプロジェクトに追加 →
+                        </Link>
+                      ) : null}
                     </div>
                   </article>
                 );

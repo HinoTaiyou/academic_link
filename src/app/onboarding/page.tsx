@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/app/(auth)/_components/auth-shell";
 import { OnboardingForm } from "./_components/onboarding-form";
+import { OnboardingShell } from "./_components/onboarding-shell";
 import { createClient } from "@/lib/supabase/server";
 import { isOnboardingIncomplete } from "@/lib/profile/onboarding";
 
@@ -29,7 +29,7 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <AuthShell>
+    <OnboardingShell>
       <OnboardingForm
         initialInterestTags={profile?.interest_tags ?? []}
         initialResearchFields={profile?.research_fields ?? []}
@@ -37,6 +37,6 @@ export default async function OnboardingPage() {
         initialDepartment={profile?.department ?? ""}
         initialGrade={profile?.grade ?? ""}
       />
-    </AuthShell>
+    </OnboardingShell>
   );
 }

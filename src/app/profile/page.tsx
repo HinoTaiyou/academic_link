@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FolderOpen } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ProfileEditForm } from "./_components/profile-edit-form";
@@ -67,16 +68,16 @@ export default async function ProfilePage() {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">
+              <h1 className="text-2xl font-bold text-[var(--al-ink)]">
                 プロフィール編集
               </h1>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-[var(--al-muted)]">
                 他のメンバーから見えるプロフィールを編集できます。
               </p>
             </div>
             <Link
               href={`/u/${user.id}`}
-              className="text-xs font-medium text-[#667eea] hover:underline"
+              className="text-xs font-medium text-[var(--al-accent)] hover:underline"
             >
               公開ビューを確認 →
             </Link>
@@ -89,9 +90,36 @@ export default async function ProfilePage() {
             initialDepartment={profile?.department ?? ""}
             initialGrade={profile?.grade ?? ""}
           />
-          <div className="pt-6">
-            <ProjectDashboardSection items={projectCards} showHeader={false} />
-          </div>
+
+          <section className="al-glass-card">
+            <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--al-accent)] shadow-sm ring-1 ring-[var(--al-border)]">
+                  <FolderOpen
+                    className="h-5 w-5"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                </span>
+                <div>
+                  <p className="al-section-eyebrow">Files</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--al-ink)]">
+                    プロジェクト・資料
+                  </h2>
+                  <p className="mt-1 text-sm text-[var(--al-muted)]">
+                    研究プロジェクトをフォルダで確認できます。
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="overflow-visible bg-[var(--al-surface)]/40 p-4 pt-3 sm:p-6 sm:pt-4">
+              <ProjectDashboardSection
+                items={projectCards}
+                showHeader={false}
+                compact
+              />
+            </div>
+          </section>
         </div>
       </div>
     </AppShell>

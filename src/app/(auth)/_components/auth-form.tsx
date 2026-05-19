@@ -1,19 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useActionState, useState } from "react";
 import type { AuthState } from "../_lib/actions";
 
 type Mode = "login" | "signup";
@@ -26,8 +16,8 @@ type Props = {
 const COPY: Record<
   Mode,
   {
-    title: string;
-    description: string;
+    headline: string;
+    subline: string;
     submit: string;
     submitting: string;
     altText: string;
@@ -36,8 +26,8 @@ const COPY: Record<
   }
 > = {
   login: {
-    title: "ログイン",
-    description: "メールアドレスとパスワードでログインします。",
+    headline: "Academic Link へようこそ",
+    subline: "メールアドレスとパスワードでログインしてください。",
     submit: "ログイン",
     submitting: "ログイン中…",
     altText: "アカウントをお持ちでないですか？",
@@ -45,8 +35,8 @@ const COPY: Record<
     altHref: "/signup",
   },
   signup: {
-    title: "新規登録",
-    description: "メールアドレスとパスワードでアカウントを作成します。",
+    headline: "研究と知見を、わかりやすくつなぐ",
+    subline: "メールアドレスとパスワードで、Academic Link をはじめましょう。",
     submit: "アカウントを作成",
     submitting: "作成中…",
     altText: "すでにアカウントをお持ちですか？",
@@ -58,76 +48,98 @@ const COPY: Record<
 export function AuthForm({ mode, action }: Props) {
   const copy = COPY[mode];
   const [state, formAction] = useActionState<AuthState, FormData>(action, {});
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <Card className="w-full gap-0 rounded-2xl bg-white py-0 shadow-2xl ring-1 ring-black/5">
-      <CardHeader className="space-y-2 px-8 pt-8 pb-2 text-center">
-        <CardTitle className="bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] bg-clip-text text-2xl font-bold text-transparent">
-          {copy.title}
-        </CardTitle>
-        <CardDescription className="text-sm">{copy.description}</CardDescription>
-      </CardHeader>
+    <div className="w-full">
+      <header className="mb-8 space-y-3 lg:mb-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--al-ink)] sm:text-3xl lg:text-[2rem] lg:leading-tight">
+          {copy.headline}
+        </h1>
+        <p className="max-w-md text-sm leading-relaxed text-[var(--al-muted)] sm:text-base">
+          {copy.subline}
+        </p>
+      </header>
 
-      <form action={formAction}>
-        <CardContent className="space-y-5 px-8 py-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs font-semibold tracking-wide uppercase text-slate-600">
-              メールアドレス
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-              className="h-11"
-            />
-          </div>
+      <form action={formAction} className="space-y-6">
+        <div className="space-y-2">
+          <label
+            htmlFor="email"
+            className="text-sm font-medium text-[var(--al-ink)]"
+          >
+            メールアドレス
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@university.ac.jp"
+            required
+            className="al-auth-input"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-xs font-semibold tracking-wide uppercase text-slate-600">
-              パスワード
-            </Label>
-            <Input
+        <div className="space-y-2">
+          <label
+            htmlFor="password"
+            className="text-sm font-medium text-[var(--al-ink)]"
+          >
+            パスワード
+          </label>
+          <div className="relative">
+            <input
               id="password"
               name="password"
-              type="password"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              type={showPassword ? "text" : "password"}
+              autoComplete={
+                mode === "login" ? "current-password" : "new-password"
+              }
               placeholder={mode === "signup" ? "6 文字以上" : ""}
               minLength={6}
               required
-              className="h-11"
+              className="al-auth-input pr-10"
             />
-          </div>
-
-          {state.error ? (
-            <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {state.error}
-            </p>
-          ) : null}
-
-          {state.message ? (
-            <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-              {state.message}
-            </p>
-          ) : null}
-        </CardContent>
-
-        <CardFooter className="flex flex-col gap-4 rounded-b-2xl border-t-0 bg-transparent px-8 pt-2 pb-8">
-          <SubmitButton submit={copy.submit} submitting={copy.submitting} />
-          <p className="text-sm text-muted-foreground">
-            {copy.altText}{" "}
-            <Link
-              href={copy.altHref}
-              className="font-semibold text-[#667eea] underline-offset-4 hover:underline"
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--al-muted)] hover:text-[var(--al-ink)]"
+              aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
             >
-              {copy.altLinkText}
-            </Link>
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {state.error ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+            {state.error}
           </p>
-        </CardFooter>
+        ) : null}
+
+        {state.message ? (
+          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+            {state.message}
+          </p>
+        ) : null}
+
+        <SubmitButton submit={copy.submit} submitting={copy.submitting} />
+
+        <p className="text-center text-sm text-[var(--al-muted)]">
+          {copy.altText}{" "}
+          <Link
+            href={copy.altHref}
+            className="font-medium text-[var(--al-accent)] underline-offset-4 hover:underline"
+          >
+            {copy.altLinkText}
+          </Link>
+        </p>
       </form>
-    </Card>
+    </div>
   );
 }
 
@@ -140,12 +152,12 @@ function SubmitButton({
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button
+    <button
       type="submit"
-      className="h-11 w-full bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] text-base font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110 disabled:opacity-60"
       disabled={pending}
+      className="al-btn-gradient h-12 w-full text-sm disabled:opacity-60"
     >
       {pending ? submitting : submit}
-    </Button>
+    </button>
   );
 }
