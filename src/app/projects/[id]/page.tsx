@@ -311,19 +311,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                       <p className="text-sm text-[var(--al-muted)]">要約は未設定です。</p>
                     )}
 
-                    <div className="flex min-h-7 flex-wrap gap-1.5">
-                      {file.tags.slice(0, 8).map((tag) => (
-                        <span
-                          key={`${file.id}-${tag}`}
-                          className="al-tag-pill"
-                        >
-                          #{tag.replace(/^#/, "")}
-                        </span>
-                      ))}
-                      {file.tags.length === 0 ? (
-                        <span className="text-xs text-[var(--al-muted)]">タグ未設定</span>
-                      ) : null}
-                    </div>
+                    {/* タグ表示は不要のため削除 */}
 
                     <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--al-muted)]">
                       <span>登録日: {formatDate(file.createdAt)}</span>
