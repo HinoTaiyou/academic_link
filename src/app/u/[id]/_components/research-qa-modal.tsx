@@ -54,8 +54,11 @@ export function ResearchQaModal({
 
   useEffect(() => {
     if (!open) return;
-    setQuestion("");
-    setError(null);
+    const t = setTimeout(() => {
+      setQuestion("");
+      setError(null);
+    }, 0);
+    return () => clearTimeout(t);
   }, [open, session?.sessionKey]);
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// removed unused Input import
 import { useRouter } from "next/navigation";
 
 export default function ProjectEditModal({
@@ -35,7 +35,8 @@ export default function ProjectEditModal({
         setOpen(false);
         router.refresh();
       }
-    } catch (e) {
+    } catch (err) {
+      console.error(err);
       setError("ネットワークエラー");
     } finally {
       setLoading(false);

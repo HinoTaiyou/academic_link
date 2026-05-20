@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
+  Bookmark,
   FlaskConical,
   GraduationCap,
   Home,
@@ -23,7 +24,7 @@ export type SidebarProfile = {
   email: string | null;
 };
 
-type NavKey = "dashboard" | "profile" | "members" | "research" | "chat";
+type NavKey = "dashboard" | "profile" | "members" | "research" | "chat" | "bookmarks";
 
 type Props = {
   profile: SidebarProfile;
@@ -40,6 +41,7 @@ const NAV_ITEMS: Array<{
 }> = [
   { key: "dashboard", href: "/dashboard", label: "ホーム", icon: Home },
   { key: "research", href: "/research/new", label: "研究を登録", icon: FlaskConical },
+  { key: "bookmarks", href: "/bookmarks", label: "保存", icon: Bookmark },
   { key: "chat", href: "/chat", label: "チャット", icon: MessageSquare },
   { key: "members", href: "/members", label: "メンバー検索", icon: Search },
 ];

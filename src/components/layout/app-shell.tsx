@@ -7,7 +7,7 @@ import { AppSidebar, type SidebarProfile } from "@/components/layout/app-sidebar
 
 type Props = {
   profile: SidebarProfile;
-  active?: "dashboard" | "profile" | "members" | "research" | "chat";
+  active?: "dashboard" | "profile" | "members" | "research" | "chat" | "bookmarks";
   quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
   children: React.ReactNode;
 };

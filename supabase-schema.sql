@@ -232,6 +232,101 @@ create index if not exists project_embeddings_owner_id_idx on public.project_emb
 create index if not exists messages_pair_idx on public.messages(from_id, to_id, created_at);
 create index if not exists messages_to_id_idx on public.messages(to_id, read_at);
 
+-- Likes and Bookmarks for research posts / project files
+create table if not exists public.likes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  target_type text not null check (target_type in ('research_post','project_file','project')),
+  target_id uuid not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, target_type, target_id)
+);
+
+create table if not exists public.bookmarks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  target_type text not null check (target_type in ('research_post','project_file','project','profile')),
+  target_id uuid not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, target_type, target_id)
+);
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.table_constraints
+    where table_schema = 'public'
+      and table_name = 'likes'
+      and constraint_name = 'likes_target_type_check'
+  ) then
+    alter table public.likes drop constraint likes_target_type_check;
+  end if;
+  alter table public.likes
+    add constraint likes_target_type_check
+    check (target_type in ('research_post','project_file','project'));
+end;
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.table_constraints
+    where table_schema = 'public'
+      and table_name = 'bookmarks'
+      and constraint_name = 'bookmarks_target_type_check'
+  ) then
+    alter table public.bookmarks drop constraint bookmarks_target_type_check;
+  end if;
+  alter table public.bookmarks
+    add constraint bookmarks_target_type_check
+    check (target_type in ('research_post','project_file','project','profile'));
+end;
+$$;
+
+create index if not exists likes_target_idx on public.likes(target_type, target_id);
+create index if not exists bookmarks_target_idx on public.bookmarks(target_type, target_id);
+
+alter table public.likes enable row level security;
+alter table public.bookmarks enable row level security;
+
+drop policy if exists "likes_select_authed" on public.likes;
+create policy "likes_select_authed"
+on public.likes for select
+to authenticated
+using (true);
+
+drop policy if exists "likes_insert_own" on public.likes;
+create policy "likes_insert_own"
+on public.likes for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "likes_delete_own" on public.likes;
+create policy "likes_delete_own"
+on public.likes for delete
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists "bookmarks_select_authed" on public.bookmarks;
+create policy "bookmarks_select_authed"
+on public.bookmarks for select
+to authenticated
+using (true);
+
+drop policy if exists "bookmarks_insert_own" on public.bookmarks;
+create policy "bookmarks_insert_own"
+on public.bookmarks for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "bookmarks_delete_own" on public.bookmarks;
+create policy "bookmarks_delete_own"
+on public.bookmarks for delete
+to authenticated
+using (auth.uid() = user_id);
+
 -- Storage bucket for PDFs
 -- Create in Dashboard: Storage -> New bucket: research-pdfs (private)
 -- Then run the storage policies below.

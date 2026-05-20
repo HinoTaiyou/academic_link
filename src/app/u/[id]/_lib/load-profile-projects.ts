@@ -122,7 +122,7 @@ export async function loadProfileProjectCards(
     );
     const hasText = Boolean(p.description?.trim() || p.name?.trim());
 
-    let qaResearchPostId: string | null = linked?.id ?? null;
+    const qaResearchPostId: string | null = linked?.id ?? null;
     let qaProjectId: string | null = null;
     if (!qaResearchPostId && (hasDoc || hasText)) {
       qaProjectId = p.id;
@@ -160,8 +160,12 @@ export function folderSubtitle(item: {
   return "RESEARCH PROJECT";
 }
 
+
 export function toOwnerDashboardItems(cards: ProfileProjectCard[]) {
-  return cards.map(
-    ({ qaResearchPostId: _a, qaProjectId: _b, ...card }) => card,
-  );
+  return cards.map((item) => {
+    const copy: Partial<ProfileProjectCard> = { ...item };
+    delete copy.qaResearchPostId;
+    delete copy.qaProjectId;
+    return copy as Omit<ProfileProjectCard, "qaResearchPostId" | "qaProjectId">;
+  });
 }

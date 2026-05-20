@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FolderOpen, MessageSquare, Pencil } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { FollowButton } from "@/components/profile/follow-button";
 import { ProfileView } from "./_components/profile-view";
 import { ProjectDashboardBrowse } from "./_components/project-dashboard-browse";
 import { ProjectDashboardSection } from "../../dashboard/_components/project-dashboard-section";
@@ -62,6 +63,7 @@ export default async function UserProfilePage({ params }: Props) {
   const isMe = profile.id === user.id;
   const profileDisplayName =
     (profile.real_name as string | null)?.trim() || "研究者";
+  const bookmarkClient = createAdminClient() ?? supabase;
 
   const researchForProjects = (researchRows ?? []).map((r) => ({
     id: r.id as string,
@@ -80,6 +82,16 @@ export default async function UserProfilePage({ params }: Props) {
   );
   const ownerDashboardItems = toOwnerDashboardItems(projectCards);
 
+  const followStatus = isMe
+    ? null
+    : await bookmarkClient
+        .from("bookmarks")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("target_type", "profile")
+        .eq("target_id", profile.id)
+        .maybeSingle();
+
   return (
     <AppShell
       active={isMe ? "profile" : undefined}
@@ -97,6 +109,12 @@ export default async function UserProfilePage({ params }: Props) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-xl font-bold text-[var(--al-ink)]">プロフィール</h1>
             <div className="flex gap-2">
+              {!isMe ? (
+                <FollowButton
+                  targetUserId={profile.id}
+                  initialFollowing={Boolean(followStatus?.data?.id)}
+                />
+              ) : null}
               {!isMe ? (
                 <Link
                   href={`/chat/${profile.id}`}
