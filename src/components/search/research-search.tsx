@@ -34,7 +34,7 @@ export default function ResearchSearch() {
           placeholder="検索ワードを入力"
           className="flex-1 rounded border px-3 py-2"
         />
-        <Button size="sm" onClick={() => void doSearch()} disabled={loading || q.trim() === ""}>
+        <Button variant="outline" size="sm" onClick={() => void doSearch()} disabled={loading || q.trim() === ""}>
           {loading ? "検索中…" : "検索"}
         </Button>
       </div>
