@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type Post = { id: string; title: string; summary: string | null; created_at: string };
 
@@ -48,9 +49,11 @@ export default function ResearchSearch() {
           <ul className="space-y-3">
             {results.map((r) => (
               <li key={r.id} className="p-3 border rounded">
-                <h3 className="font-semibold">{r.title}</h3>
-                <p className="text-sm text-gray-600">{r.summary}</p>
-                <div className="text-xs text-gray-400">{new Date(r.created_at).toLocaleString()}</div>
+                <Link href={`/research/${r.id}`} className="block">
+                  <h3 className="font-semibold text-[var(--al-ink)]">{r.title}</h3>
+                  <p className="text-sm text-[var(--al-muted)]">{r.summary}</p>
+                  <div className="text-xs text-[var(--al-muted)]">{new Date(r.created_at).toLocaleString()}</div>
+                </Link>
               </li>
             ))}
           </ul>
