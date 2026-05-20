@@ -4,6 +4,7 @@
 -- Enable extensions (optional but useful)
 create extension if not exists "pgcrypto";
 create extension if not exists "vector";
+create extension if not exists "pg_trgm";
 
 -- Profiles: app user metadata linked to auth.users
 create table if not exists public.profiles (
