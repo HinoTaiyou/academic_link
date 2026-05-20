@@ -24,7 +24,7 @@ export type SidebarProfile = {
   email: string | null;
 };
 
-type NavKey = "dashboard" | "profile" | "members" | "research" | "chat" | "bookmarks";
+type NavKey = "dashboard" | "profile" | "members" | "research" | "research_search" | "chat" | "bookmarks";
 
 type Props = {
   profile: SidebarProfile;
@@ -40,6 +40,7 @@ const NAV_ITEMS: Array<{
   icon: LucideIcon;
 }> = [
   { key: "dashboard", href: "/dashboard", label: "ホーム", icon: Home },
+  { key: "research_search", href: "/research/search", label: "研究検索", icon: Search },
   { key: "research", href: "/research/new", label: "研究を登録", icon: FlaskConical },
   { key: "bookmarks", href: "/bookmarks", label: "保存", icon: Bookmark },
   { key: "chat", href: "/chat", label: "チャット", icon: MessageSquare },
