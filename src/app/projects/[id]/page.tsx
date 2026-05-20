@@ -3,6 +3,7 @@ import { FileText, FolderOpen } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import ProjectEditModal from "@/components/projects/project-edit-modal";
+import FileActions from "@/components/projects/file-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +19,7 @@ type ProjectFileItem = {
   id: string;
   createdAt: string;
   sourceType: string;
+  actionTargetType: "project_file" | "research_post";
   title: string;
   summary: string;
   tags: string[];
@@ -100,7 +102,10 @@ export default async function ProjectDetailPage({ params }: Props) {
     .order("created_at", { ascending: false });
 
   if (!primaryFilesRes.error) {
-    fileRows = (primaryFilesRes.data ?? []) as Array<Record<string, unknown>>;
+    fileRows = (primaryFilesRes.data ?? []).map((row) => ({
+      ...row,
+      actionTargetType: "project_file",
+    })) as Array<Record<string, unknown>>;
   } else {
     debugErrorDetails.push(String(primaryFilesRes.error?.message ?? primaryFilesRes.error));
 
@@ -113,7 +118,10 @@ export default async function ProjectDetailPage({ params }: Props) {
       .order("created_at", { ascending: false });
 
     if (!fallbackFilesRes.error) {
-      fileRows = (fallbackFilesRes.data ?? []) as Array<Record<string, unknown>>;
+      fileRows = (fallbackFilesRes.data ?? []).map((row) => ({
+        ...row,
+        actionTargetType: "project_file",
+      })) as Array<Record<string, unknown>>;
       fileFetchNotice =
         "資料の一部項目（図表メモ）が利用できないため、互換モードで表示しています。";
     } else {
@@ -130,6 +138,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         fileRows = (postsFallbackRes.data ?? []).map((row) => ({
           id: row.id,
           created_at: row.created_at,
+          actionTargetType: "research_post",
           source_type: row.pdf_path ? "pdf" : "text",
           title: row.title,
           summary: row.summary,
@@ -155,6 +164,7 @@ export default async function ProjectDetailPage({ params }: Props) {
     id: String(row.id),
     createdAt: String(row.created_at),
     sourceType: String(row.source_type ?? "other"),
+    actionTargetType: (row.actionTargetType as ProjectFileItem["actionTargetType"]) ?? "project_file",
     title: String(row.title ?? "無題"),
     summary: String(row.summary ?? ""),
     tags: (row.tags as string[] | null) ?? [],
@@ -179,6 +189,38 @@ export default async function ProjectDetailPage({ params }: Props) {
   const signedMap = new Map<string, string | null>(signedEntries);
 
   const interestTags = (profile?.interest_tags ?? []) as string[];
+
+  const projectStatusClient = createAdminClient() ?? supabase;
+  const [projectBookmarkStatus, projectBookmarkCountRes] = await Promise.all([
+    projectStatusClient
+      .from("bookmarks")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("target_type", "project")
+      .eq("target_id", project.id)
+      .maybeSingle(),
+    projectStatusClient
+      .from("bookmarks")
+      .select("id", { count: "exact" })
+      .eq("target_type", "project")
+      .eq("target_id", project.id),
+  ]);
+
+  const projectBookmarkStatusData = projectBookmarkStatus.data;
+
+  // --- preload per-file bookmark existence to hydrate FileActions ---
+  const fileIds = files.map((f) => f.id);
+  const fileBookmarkedMap = new Map<string, boolean>();
+  if (fileIds.length > 0) {
+    const fileBookmarksRes = await projectStatusClient
+      .from("bookmarks")
+      .select("target_type,target_id")
+      .eq("user_id", user.id)
+      .in("target_id", fileIds);
+
+    const bookmarkRows = (fileBookmarksRes.data ?? []) as Array<{ target_type: string; target_id: string }>;
+    bookmarkRows.forEach((r) => fileBookmarkedMap.set(`${r.target_type}:${r.target_id}`, true));
+  }
 
   return (
     <AppShell
@@ -241,6 +283,14 @@ export default async function ProjectDetailPage({ params }: Props) {
                     />
                   </div>
                 ) : null}
+                <div className="shrink-0">
+                  <FileActions
+                    targetType="project"
+                    targetId={project.id}
+                    initialBookmarked={Boolean(projectBookmarkStatusData?.id)}
+                    initialBookmarkCount={projectBookmarkCountRes.count ?? 0}
+                  />
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--al-muted)]">
                 {project.pinned ? (
@@ -349,6 +399,16 @@ export default async function ProjectDetailPage({ params }: Props) {
                           このプロジェクトに追加 →
                         </Link>
                       ) : null}
+                      {/* like / bookmark actions */}
+                      <div className="shrink-0">
+                        <FileActions
+                          targetType={file.actionTargetType}
+                          targetId={file.id}
+                          initialBookmarked={Boolean(
+                            fileBookmarkedMap.get(`${file.actionTargetType}:${file.id}`),
+                          )}
+                        />
+                      </div>
                     </div>
                   </article>
                 );
