@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 type Post = { id: string; title: string; summary: string | null; created_at: string };
 
 export default function ResearchSearch() {
   const [q, setQ] = useState("");
-  const [results, setResults] = useState<Post[]>([]);
+  const [results, setResults] = useState<Post[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function doSearch(page = 1) {
+    if (!q.trim()) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/research/search?q=${encodeURIComponent(q)}&page=${page}`);
@@ -17,6 +19,7 @@ export default function ResearchSearch() {
       setResults(json.data ?? []);
     } catch (err) {
       console.error(err);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -29,16 +32,16 @@ export default function ResearchSearch() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="検索ワードを入力"
-          className="rounded border px-3 py-2"
+          className="flex-1 rounded border px-3 py-2"
         />
-        <button className="btn" onClick={() => void doSearch()} disabled={loading || q.trim() === ""}>
-          検索
-        </button>
+        <Button size="sm" onClick={() => void doSearch()} disabled={loading || q.trim() === ""}>
+          {loading ? "検索中…" : "検索"}
+        </Button>
       </div>
 
       <div className="mt-4">
-        {loading ? (
-          <p>検索中…</p>
+        {results === null ? (
+          <p className="text-sm text-gray-500">キーワードを入力して検索してください</p>
         ) : results.length === 0 ? (
           <p className="text-sm text-gray-500">結果がありません</p>
         ) : (
