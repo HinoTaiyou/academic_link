@@ -67,12 +67,18 @@ export default async function BookmarksPage() {
     return (k && grouped[k]) || [];
   };
 
-  const [postsRes, projectsRes, filesRes, profilesRes] = await Promise.all([
-    getGroupIds("research_post").length
-      ? supabase.from("research_posts").select("id,title,summary,tags,created_at").in("id", getGroupIds("research_post"))
+  const researchIds = getGroupIds("research_post");
+  const projectIds = getGroupIds("project");
+
+  const [postsByIdRes, projPostsRes, projectsRes, filesRes, profilesRes] = await Promise.all([
+    researchIds.length
+      ? supabase.from("research_posts").select("id,title,summary,tags,created_at").in("id", researchIds)
       : Promise.resolve({ data: [] }),
-    getGroupIds("project").length
-      ? supabase.from("projects").select("id,name,description,created_at,owner_id").in("id", getGroupIds("project"))
+    projectIds.length
+      ? supabase.from("research_posts").select("id,title,summary,tags,created_at,project_id").in("project_id", projectIds)
+      : Promise.resolve({ data: [] }),
+    projectIds.length
+      ? supabase.from("projects").select("id,name,description,created_at,owner_id").in("id", projectIds)
       : Promise.resolve({ data: [] }),
     getGroupIds("project_file").length
       ? supabase
@@ -88,7 +94,12 @@ export default async function BookmarksPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
-  const posts = (postsRes.data ?? []) as ResearchBookmark[];
+  // Merge posts fetched by direct bookmark and posts that belong to bookmarked projects.
+  const postsMap = new Map<string, ResearchBookmark>();
+  (postsByIdRes.data ?? []).forEach((r: any) => postsMap.set(r.id as string, { id: r.id, title: r.title, summary: r.summary }));
+  (projPostsRes.data ?? []).forEach((r: any) => postsMap.set(r.id as string, { id: r.id, title: r.title, summary: r.summary }));
+
+  const posts = Array.from(postsMap.values()) as ResearchBookmark[];
   const projects = (projectsRes.data ?? []) as ProjectBookmark[];
   const files = (filesRes.data ?? []) as FileBookmark[];
   const profiles = (profilesRes.data ?? []) as ProfileBookmark[];
