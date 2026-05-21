@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,10 +38,7 @@ export default async function ResearchPostPage({ params }: Props) {
     .maybeSingle();
 
   return (
-    <AppShell
-      active="research"
-      profile={{ id: user.id, realName: null, department: null, grade: null, interestTags: [], email: user.email ?? null }}
-    >
+    <AuthenticatedAppShell active="research">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <section className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
@@ -66,6 +63,6 @@ export default async function ResearchPostPage({ params }: Props) {
           </div>
         </section>
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

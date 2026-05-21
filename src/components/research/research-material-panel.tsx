@@ -13,12 +13,10 @@ import { cn } from "@/lib/utils";
 type TabId = "original" | "summary";
 
 type Props = {
-  title: string;
   summary: string;
   tags?: string[];
   slideViewUrl?: string | null;
   pdfUrl?: string | null;
-  rawText?: string;
   /** 記録されているファイル名（PDF 未保存のときの案内用） */
   fileName?: string | null;
   sourceType?: string;
@@ -26,12 +24,10 @@ type Props = {
 };
 
 export function ResearchMaterialPanel({
-  title,
   summary,
   tags = [],
   slideViewUrl,
   pdfUrl,
-  rawText,
   fileName,
   sourceType,
   className,
@@ -87,7 +83,6 @@ export function ResearchMaterialPanel({
 
       {tab === "original" && hasOriginal ? (
         <OriginalPane
-          title={title}
           slideViewUrl={slideViewUrl}
           pdfUrl={pdfUrl}
           fileName={fileName}
@@ -133,13 +128,11 @@ function TabButton({
 }
 
 function OriginalPane({
-  title,
   slideViewUrl,
   pdfUrl,
   fileName,
   sourceType,
 }: {
-  title: string;
   slideViewUrl?: string | null;
   pdfUrl?: string | null;
   fileName?: string | null;

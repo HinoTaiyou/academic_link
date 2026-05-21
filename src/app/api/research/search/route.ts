@@ -41,7 +41,7 @@ export async function GET(req: Request) {
       }));
 
       return NextResponse.json({ data: rows, count: rows.length });
-    } catch (rpcErr) {
+    } catch {
       // Attempt safe ilike fallback
       try {
         const likeQ = `%${q}%`;

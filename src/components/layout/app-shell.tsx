@@ -46,7 +46,7 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
           .eq("to_id", profile.id)
           .is("read_at", null);
         if (mounted) setChatUnreadCount(res.count ?? 0);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }

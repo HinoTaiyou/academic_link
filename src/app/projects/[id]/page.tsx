@@ -367,7 +367,6 @@ export default async function ProjectDetailPage({ params }: Props) {
                     </div>
 
                     <ResearchMaterialPanel
-                      title={file.title}
                       summary={file.summary}
                       tags={file.tags}
                       slideViewUrl={file.slideViewUrl}

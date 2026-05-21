@@ -1,23 +1,12 @@
 import { Search } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import ResearchSearch from "@/components/search/research-search";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "研究検索 | Academic Link" };
 
 export default async function SearchPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
   return (
-    <AppShell
-      active="research_search"
-      profile={{ id: user.id, realName: null, department: null, grade: null, interestTags: [], email: user.email ?? null }}
-    >
+    <AuthenticatedAppShell active="research_search">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <section className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
@@ -40,6 +29,6 @@ export default async function SearchPage() {
           </div>
         </section>
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

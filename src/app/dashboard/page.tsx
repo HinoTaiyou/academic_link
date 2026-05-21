@@ -34,7 +34,6 @@ export default async function DashboardPage() {
   return (
     <AuthenticatedAppShell active="dashboard">
       <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-10">
-        {/* Chat unread badge removed from dashboard (duplicate with sidebar) */}
         <NewsSection
           variant="interest"
           title="あなたの興味に基づくニュース"

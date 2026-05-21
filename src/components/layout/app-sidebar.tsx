@@ -16,38 +16,41 @@ import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 
-export type SidebarProfile = {
-  id: string;
-  realName: string | null;
-  department: string | null;
-  grade: string | null;
-  interestTags: string[];
-  email: string | null;
-};
+export type SidebarProfile = { id: string };
 
-type NavKey = "dashboard" | "profile" | "members" | "research" | "research_search" | "chat" | "bookmarks";
+export type SidebarNavKey =
+  | "dashboard"
+  | "profile"
+  | "members"
+  | "research"
+  | "research_search"
+  | "chat"
+  | "bookmarks";
 
 type Props = {
   profile: SidebarProfile;
-  active?: NavKey;
+  active?: SidebarNavKey;
   className?: string;
   quickProjects?: SidebarProject[];
   chatUnreadCount?: number;
 };
 
-const NAV_ITEMS: Array<{
-  key: NavKey;
+function navItems(profileId: string): Array<{
+  key: SidebarNavKey;
   href: string;
   label: string;
   icon: LucideIcon;
-}> = [
-  { key: "dashboard", href: "/dashboard", label: "ホーム", icon: Home },
-  { key: "research_search", href: "/research/search", label: "研究検索", icon: Search },
-  { key: "research", href: "/research/new", label: "研究を登録", icon: FlaskConical },
-  { key: "bookmarks", href: "/bookmarks", label: "保存", icon: Bookmark },
-  { key: "chat", href: "/chat", label: "チャット", icon: MessageSquare },
-  { key: "members", href: "/members", label: "メンバー検索", icon: Search },
-];
+}> {
+  return [
+    { key: "dashboard", href: "/dashboard", label: "ホーム", icon: Home },
+    { key: "research", href: "/research/new", label: "研究登録", icon: FlaskConical },
+    { key: "members", href: "/members", label: "メンバー検索", icon: Search },
+    { key: "research_search", href: "/research/search", label: "研究検索", icon: Search },
+    { key: "bookmarks", href: "/bookmarks", label: "保存", icon: Bookmark },
+    { key: "profile", href: `/u/${profileId}`, label: "プロフィール", icon: User },
+    { key: "chat", href: "/chat", label: "チャット", icon: MessageSquare },
+  ];
+}
 
 export function AppSidebar({
   profile,
@@ -77,24 +80,17 @@ export function AppSidebar({
         <p className="mb-2 px-2 text-xs font-medium text-[var(--al-muted)]">
           一般
         </p>
-              {NAV_ITEMS.map((item) => (
-                <NavItem
-                  key={item.key}
-                  href={item.href}
-                  icon={item.icon}
-                  active={active === item.key}
-                  badgeCount={item.key === "chat" ? chatUnreadCount : undefined}
-                >
-                  {item.label}
-                </NavItem>
-              ))}
-        <NavItem
-          href={`/u/${profile.id}`}
-          icon={User}
-          active={active === "profile"}
-        >
-          プロフィール
-        </NavItem>
+        {navItems(profile.id).map((item) => (
+          <NavItem
+            key={item.key}
+            href={item.href}
+            icon={item.icon}
+            active={active === item.key}
+            badgeCount={item.key === "chat" ? chatUnreadCount : undefined}
+          >
+            {item.label}
+          </NavItem>
+        ))}
 
         <SidebarProjects projects={quickProjects} />
       </nav>
@@ -120,27 +116,23 @@ function NavItem({
   href,
   icon: Icon,
   active,
-  disabled,
   children,
   badgeCount,
 }: {
-  href?: string;
+  href: string;
   icon: LucideIcon;
   active?: boolean;
-  disabled?: boolean;
   children: React.ReactNode;
   badgeCount?: number;
 }) {
   const base =
     "flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm transition-colors";
-  const stateCls = disabled
-    ? "cursor-not-allowed text-[var(--al-muted)] opacity-50"
-    : active
-      ? "bg-white font-medium text-[var(--al-ink)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--al-accent)_25%,var(--al-border))]"
-      : "font-normal text-[var(--al-muted)] hover:bg-white/80 hover:text-[var(--al-ink)]";
+  const stateCls = active
+    ? "bg-white font-medium text-[var(--al-ink)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--al-accent)_25%,var(--al-border))]"
+    : "font-normal text-[var(--al-muted)] hover:bg-white/80 hover:text-[var(--al-ink)]";
 
-  const content = (
-    <>
+  return (
+    <Link href={href} className={cn(base, stateCls)}>
       <Icon
         className={cn(
           "h-4 w-4 shrink-0",
@@ -157,19 +149,6 @@ function NavItem({
           </span>
         ) : null}
       </span>
-    </>
-  );
-
-  if (disabled || !href) {
-    return (
-      <div className={cn(base, stateCls)} aria-disabled>
-        {content}
-      </div>
-    );
-  }
-  return (
-    <Link href={href} className={cn(base, stateCls)}>
-      {content}
     </Link>
   );
 }

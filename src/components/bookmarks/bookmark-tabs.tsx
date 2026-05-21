@@ -4,22 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 
 type ProfileBookmark = { id: string; real_name: string | null; department: string | null; grade: string | null };
-type ResearchBookmark = { id: string; title: string; summary: string | null };
 type ProjectBookmark = { id: string; name: string; description: string | null };
 type FileBookmark = { id: string; title: string; summary: string | null; project_id: string };
 
 export default function BookmarkTabs({
   profiles,
-  posts,
   projects,
   files,
 }: {
   profiles: ProfileBookmark[];
-  posts: ResearchBookmark[];
   projects: ProjectBookmark[];
   files: FileBookmark[];
 }) {
-  // Show projects only (do not display research posts here)
   const tabs = [
     { key: "profiles", label: "研究者", count: profiles.length },
     { key: "projects", label: "プロジェクト", count: projects.length },
@@ -63,7 +59,6 @@ export default function BookmarkTabs({
 
         {active === "projects" ? (
           <div className="space-y-3">
-            {/* Projects first */}
             {projects.length === 0 ? (
               <p className="text-sm text-[var(--al-muted)]">ブックマークされたプロジェクトはありません。</p>
             ) : (
@@ -77,8 +72,6 @@ export default function BookmarkTabs({
                 </article>
               ))
             )}
-
-            {/* No research posts are shown here by design */}
           </div>
         ) : null}
 

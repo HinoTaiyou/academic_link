@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import BookmarkTabs from "@/components/bookmarks/bookmark-tabs";
 
 export const metadata = { title: "ブックマーク | Academic Link" };
@@ -16,12 +16,6 @@ type ProfileBookmark = {
   real_name: string | null;
   department: string | null;
   grade: string | null;
-};
-
-type ResearchBookmark = {
-  id: string;
-  title: string;
-  summary: string | null;
 };
 
 type ProjectBookmark = {
@@ -87,16 +81,12 @@ export default async function BookmarksPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
-  const posts: ResearchBookmark[] = []; // research posts are intentionally not shown in bookmarks
   const projects = (projectsRes.data ?? []) as ProjectBookmark[];
   const files = (filesRes.data ?? []) as FileBookmark[];
   const profiles = (profilesRes.data ?? []) as ProfileBookmark[];
 
   return (
-    <AppShell
-      active="bookmarks"
-      profile={{ id: user.id, realName: null, department: null, grade: null, interestTags: [], email: user.email ?? null }}
-    >
+    <AuthenticatedAppShell active="bookmarks">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <section className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
@@ -109,10 +99,10 @@ export default async function BookmarksPage() {
           </div>
 
           <div className="p-4 sm:p-5">
-            <BookmarkTabs profiles={profiles} posts={posts} projects={projects} files={files} />
+            <BookmarkTabs profiles={profiles} projects={projects} files={files} />
           </div>
         </section>
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

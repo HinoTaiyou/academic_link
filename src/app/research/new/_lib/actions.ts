@@ -12,7 +12,6 @@ import { isLikelySlideViewUrl } from "@/lib/research/slide-url";
 import { uploadResearchPdf } from "@/lib/supabase/upload-research-pdf";
 import { extractPdfText } from "./pdf";
 
-const BUCKET = "research-pdfs";
 const MAX_PDF_BYTES = 15 * 1024 * 1024; // 15MB
 
 export type AnalyzeState =

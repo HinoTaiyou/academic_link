@@ -1,17 +1,9 @@
 import { AppShell } from "@/components/layout/app-shell";
+import type { SidebarNavKey } from "@/components/layout/app-sidebar";
 import { getAuthenticatedShellData } from "@/lib/layout/authenticated-shell-data";
 
-type NavKey =
-  | "dashboard"
-  | "profile"
-  | "members"
-  | "research"
-  | "research_search"
-  | "chat"
-  | "bookmarks";
-
 type Props = {
-  active?: NavKey;
+  active?: SidebarNavKey;
   children: React.ReactNode;
 };
 

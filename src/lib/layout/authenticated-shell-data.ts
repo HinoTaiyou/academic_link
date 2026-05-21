@@ -16,23 +16,10 @@ export async function getAuthenticatedShellData(): Promise<{
     redirect("/login");
   }
 
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("real_name, department, grade, interest_tags")
-    .eq("id", user.id)
-    .maybeSingle();
-
   const quickProjects = await loadSidebarProjects(supabase, user.id);
 
   return {
-    profile: {
-      id: user.id,
-      realName: profileRow?.real_name ?? null,
-      department: profileRow?.department ?? null,
-      grade: profileRow?.grade ?? null,
-      interestTags: (profileRow?.interest_tags ?? []) as string[],
-      email: user.email ?? null,
-    },
+    profile: { id: user.id },
     quickProjects,
   };
 }
