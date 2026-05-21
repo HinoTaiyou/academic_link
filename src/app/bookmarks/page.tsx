@@ -59,24 +59,32 @@ export default async function BookmarksPage() {
     {},
   );
 
+  // Helper: some older data or variants might store slightly different target_type
+  // strings (e.g. "research_posts"). Provide a tolerant lookup.
+  const getGroupIds = (substr: string) => {
+    if (grouped[substr] && grouped[substr].length) return grouped[substr];
+    const k = Object.keys(grouped).find((kk) => kk.includes(substr));
+    return (k && grouped[k]) || [];
+  };
+
   const [postsRes, projectsRes, filesRes, profilesRes] = await Promise.all([
-    grouped["research_post"] && grouped["research_post"].length
-      ? supabase.from("research_posts").select("id,title,summary,tags,created_at").in("id", grouped["research_post"])
+    getGroupIds("research_post").length
+      ? supabase.from("research_posts").select("id,title,summary,tags,created_at").in("id", getGroupIds("research_post"))
       : Promise.resolve({ data: [] }),
-    grouped["project"] && grouped["project"].length
-      ? supabase.from("projects").select("id,name,description,created_at,owner_id").in("id", grouped["project"])
+    getGroupIds("project").length
+      ? supabase.from("projects").select("id,name,description,created_at,owner_id").in("id", getGroupIds("project"))
       : Promise.resolve({ data: [] }),
-    grouped["project_file"] && grouped["project_file"].length
+    getGroupIds("project_file").length
       ? supabase
           .from("project_files")
           .select("id,title,summary,created_at,project_id,file_name")
-          .in("id", grouped["project_file"])
+          .in("id", getGroupIds("project_file"))
       : Promise.resolve({ data: [] }),
-    grouped["profile"] && grouped["profile"].length
+    getGroupIds("profile").length
       ? supabase
           .from("profiles")
           .select("id,real_name,department,grade")
-          .in("id", grouped["profile"])
+          .in("id", getGroupIds("profile"))
       : Promise.resolve({ data: [] }),
   ]);
 
