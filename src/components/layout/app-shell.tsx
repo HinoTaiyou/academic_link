@@ -72,7 +72,7 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
   return (
     <div className="al-page-mesh min-h-screen">
       <div className="fixed inset-y-0 left-0 z-20 hidden w-60 sm:block">
-        <AppSidebar profile={profile} active={active} quickProjects={quickProjects} />
+        <AppSidebar profile={profile} active={active} quickProjects={quickProjects} chatUnreadCount={chatUnreadCount} />
       </div>
 
       <div className="flex min-h-screen flex-col sm:pl-60">
@@ -108,7 +108,7 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
             className="absolute inset-0 bg-black/50"
           />
           <div className="relative z-10 flex h-full w-72 max-w-[80%]">
-            <AppSidebar profile={profile} active={active} quickProjects={quickProjects} />
+            <AppSidebar profile={profile} active={active} quickProjects={quickProjects} chatUnreadCount={chatUnreadCount} />
             <button
               type="button"
               aria-label="メニューを閉じる"
