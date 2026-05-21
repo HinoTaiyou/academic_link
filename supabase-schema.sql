@@ -10,6 +10,7 @@ create extension if not exists "pg_trgm";
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   real_name text,
+  student_number text,
   department text,
   grade text,
   interest_tags text[] not null default '{}',
@@ -232,6 +233,23 @@ create index if not exists project_embeddings_project_id_idx on public.project_e
 create index if not exists project_embeddings_owner_id_idx on public.project_embeddings(owner_id);
 create index if not exists messages_pair_idx on public.messages(from_id, to_id, created_at);
 create index if not exists messages_to_id_idx on public.messages(to_id, read_at);
+
+-- Add student_number column if missing and index for faster lookup
+do $$
+begin
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'profiles'
+      and column_name = 'student_number'
+  ) then
+    alter table public.profiles add column student_number text;
+  end if;
+end;
+$$;
+
+create unique index if not exists profiles_student_number_idx on public.profiles(lower(student_number)) where student_number is not null;
 
 -- Likes and Bookmarks for research posts / project files
 create table if not exists public.likes (

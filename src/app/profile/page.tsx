@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { FolderOpen } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
@@ -29,7 +28,9 @@ export default async function ProfilePage() {
   const [{ data: profile }, { data: researchRows }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("real_name, department, grade, interest_tags, research_fields")
+      .select(
+        "real_name, student_number, department, grade, interest_tags, research_fields",
+      )
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -65,12 +66,7 @@ export default async function ProfilePage() {
                 他のメンバーから見えるプロフィールを編集できます。
               </p>
             </div>
-            <Link
-              href={`/u/${user.id}`}
-              className="text-xs font-medium text-[var(--al-accent)] hover:underline"
-            >
-              公開ビューを確認 →
-            </Link>
+            {}
           </div>
 
           <ProfileEditForm
@@ -79,6 +75,8 @@ export default async function ProfilePage() {
             initialRealName={profile?.real_name ?? ""}
             initialDepartment={profile?.department ?? ""}
             initialGrade={profile?.grade ?? ""}
+            initialStudentNumber={profile?.student_number ?? ""}
+            userId={user.id}
           />
 
           <section className="al-glass-card">

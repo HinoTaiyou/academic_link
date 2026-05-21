@@ -17,6 +17,10 @@ function readPassword(formData: FormData): string {
   return (formData.get("password") as string | null) ?? "";
 }
 
+function readStudentNumber(formData: FormData): string {
+  return (formData.get("student_number") as string | null)?.trim() ?? "";
+}
+
 export async function loginAction(
   _prev: AuthState,
   formData: FormData,
@@ -45,9 +49,13 @@ export async function signupAction(
 ): Promise<AuthState> {
   const email = readEmail(formData);
   const password = readPassword(formData);
+  const studentNumber = readStudentNumber(formData);
 
   if (!email || !password) {
     return { error: "メールアドレスとパスワードを入力してください。" };
+  }
+  if (!studentNumber) {
+    return { error: "学籍番号を入力してください。" };
   }
   if (password.length < 6) {
     return { error: "パスワードは 6 文字以上にしてください。" };
@@ -64,6 +72,20 @@ export async function signupAction(
 
   if (error) {
     return { error: translateAuthError(error.message) };
+  }
+
+  // If signup immediately returns a session (e.g. no email confirmation required),
+  // upsert the student_number into profiles. If not, the user can set it later
+  // from profile edit / onboarding.
+  try {
+    if (data?.user && data?.session) {
+      await supabase.from("profiles").upsert(
+        { id: data.user.id, student_number: studentNumber },
+        { onConflict: "id" },
+      );
+    }
+  } catch (e) {
+    console.error("upsert student_number after signup", e);
   }
 
   if (data.session) {

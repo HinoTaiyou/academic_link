@@ -41,7 +41,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("real_name, department, grade, interest_tags, research_fields")
+    .select("real_name, student_number, department, grade, interest_tags, research_fields")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -50,7 +50,7 @@ export default async function MembersPage({ searchParams }: PageProps) {
 
   const { data: rows, error } = await supabase
     .from("profiles")
-    .select("id, real_name, department, grade, interest_tags, research_fields")
+    .select("id, real_name, student_number, department, grade, interest_tags, research_fields")
     .neq("id", user.id);
 
   if (error) {
@@ -96,7 +96,8 @@ export default async function MembersPage({ searchParams }: PageProps) {
     const qLower = rawQ.toLowerCase();
     members = members.filter((m) =>
       (m.real_name ?? "").toLowerCase().includes(qLower) ||
-      (m.id ?? "").toLowerCase().includes(qLower),
+      (m.id ?? "").toLowerCase().includes(qLower) ||
+      (m.student_number ?? "").toLowerCase().includes(qLower),
     );
   }
 
@@ -132,17 +133,22 @@ export default async function MembersPage({ searchParams }: PageProps) {
           </div>
 
           <div className="space-y-5 border-b border-[var(--al-border)] bg-[var(--al-surface)]/50 p-4 sm:p-5">
-            <form method="get" className="mb-3">
-              <div className="flex gap-2">
-                <input
-                  name="q"
-                  defaultValue={rawQ}
-                  placeholder="ID・名前で検索"
-                  className="flex-1 rounded border px-3 py-2"
-                />
-                <button type="submit" className="al-btn-outline">検索</button>
-              </div>
-            </form>
+            <form method="get" className="mb-3" autoComplete="off">
+                <div className="flex gap-2">
+                  <input
+                    name="q"
+                    defaultValue={rawQ}
+                    placeholder="学籍番号・名前で検索"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    aria-autocomplete="none"
+                    className="flex-1 rounded border px-3 py-2"
+                  />
+                  <button type="submit" className="al-btn-outline">検索</button>
+                </div>
+              </form>
 
             <TagFilterChips
               interestOptions={interestFilterOptions}

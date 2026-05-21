@@ -80,6 +80,25 @@ export function AuthForm({ mode, action }: Props) {
           />
         </div>
 
+        {mode === "signup" ? (
+          <div className="space-y-2">
+            <label
+              htmlFor="student_number"
+              className="text-sm font-medium text-[var(--al-ink)]"
+            >
+              学籍番号
+            </label>
+            <input
+              id="student_number"
+              name="student_number"
+              type="text"
+              placeholder="例: S1234567"
+              required
+              className="al-auth-input"
+            />
+          </div>
+        ) : null}
+
         <div className="space-y-2">
           <label
             htmlFor="password"
