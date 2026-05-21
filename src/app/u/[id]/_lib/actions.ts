@@ -1,17 +1,10 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
-const BUCKET = "research-pdfs";
+import { createResearchPdfSignedUrl } from "@/lib/supabase/research-pdf-signed-url";
 
 export async function getResearchPdfSignedUrl(
   path: string,
   expiresIn = 60 * 10,
 ): Promise<string | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, expiresIn);
-  if (error || !data) return null;
-  return data.signedUrl;
+  return createResearchPdfSignedUrl(path, expiresIn);
 }

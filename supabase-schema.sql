@@ -363,6 +363,28 @@ using (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "research_pdfs_select_public_linked" on storage.objects;
+create policy "research_pdfs_select_public_linked"
+on storage.objects for select
+to authenticated
+using (
+  bucket_id = 'research-pdfs'
+  and (
+    exists (
+      select 1
+      from public.project_files pf
+      inner join public.projects p on p.id = pf.project_id
+      where pf.storage_path = name
+        and p.archived = false
+    )
+    or exists (
+      select 1
+      from public.research_posts rp
+      where rp.pdf_path = name
+    )
+  )
+);
+
 drop policy if exists "research_pdfs_insert_own" on storage.objects;
 create policy "research_pdfs_insert_own"
 on storage.objects for insert

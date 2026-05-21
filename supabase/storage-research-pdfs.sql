@@ -13,13 +13,14 @@
 
 -- 古いポリシーを削除
 drop policy if exists "research_pdfs_select_own" on storage.objects;
+drop policy if exists "research_pdfs_select_public_linked" on storage.objects;
 drop policy if exists "research_pdfs_insert_own" on storage.objects;
 drop policy if exists "research_pdfs_delete_own" on storage.objects;
 drop policy if exists "research_pdfs_update_own" on storage.objects;
 drop policy if exists "Allow authenticated uploads" on storage.objects;
 drop policy if exists "Give users access to own folder" on storage.objects;
 
--- 読み取り
+-- 読み取り（自分のフォルダ）
 create policy "research_pdfs_select_own"
 on storage.objects
 for select
@@ -27,6 +28,29 @@ to authenticated
 using (
   bucket_id = 'research-pdfs'
   and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- 読み取り（公開プロジェクト・研究に紐づく他人の PDF）
+create policy "research_pdfs_select_public_linked"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'research-pdfs'
+  and (
+    exists (
+      select 1
+      from public.project_files pf
+      inner join public.projects p on p.id = pf.project_id
+      where pf.storage_path = name
+        and p.archived = false
+    )
+    or exists (
+      select 1
+      from public.research_posts rp
+      where rp.pdf_path = name
+    )
+  )
 );
 
 -- 書き込み（INSERT）※ PDF アップロードに必須
@@ -75,11 +99,16 @@ using (
 --    WITH CHECK expression:
 --      (bucket_id = 'research-pdfs'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text)
 --
--- 2) SELECT（ダウンロード・署名付き URL）
+-- 2) SELECT（自分のフォルダ）
 --    Policy name: research_pdfs_select_own
---    Allowed operation: SELECT
---    Target roles: authenticated
---    USING expression:
---      (bucket_id = 'research-pdfs'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text)
+--    USING: (bucket_id = 'research-pdfs') AND ((storage.foldername(name))[1] = auth.uid()::text)
+--
+-- 3) SELECT（公開資料に紐づく PDF）※ 他人の原本表示に必要
+--    Policy name: research_pdfs_select_public_linked
+--    USING: bucket_id = 'research-pdfs' AND (
+--      EXISTS (SELECT 1 FROM project_files pf JOIN projects p ON p.id = pf.project_id
+--              WHERE pf.storage_path = name AND p.archived = false)
+--      OR EXISTS (SELECT 1 FROM research_posts rp WHERE rp.pdf_path = name)
+--    )
 --
 -- INSERT だけ作っても PDF アップロードは動くことが多いです。

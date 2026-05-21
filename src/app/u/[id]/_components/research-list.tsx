@@ -27,18 +27,14 @@ export async function ResearchList({ items, isOwner }: Props) {
     );
   }
 
-  // 自分の一覧のときだけ signed URL を作る（他人の Storage は RLS で読めない）
   const signedMap = new Map<string, string>();
-  if (isOwner) {
-    await Promise.all(
-      items.map(async (it) => {
-        if (it.pdf_path) {
-          const url = await getResearchPdfSignedUrl(it.pdf_path);
-          if (url) signedMap.set(it.id, url);
-        }
-      }),
-    );
-  }
+  await Promise.all(
+    items.map(async (it) => {
+      if (!it.pdf_path) return;
+      const url = await getResearchPdfSignedUrl(it.pdf_path);
+      if (url) signedMap.set(it.id, url);
+    }),
+  );
 
   return (
     <ul className="space-y-3">
@@ -78,7 +74,7 @@ export async function ResearchList({ items, isOwner }: Props) {
             </div>
           ) : null}
 
-          {isOwner && it.pdf_path && signedMap.get(it.id) ? (
+          {it.pdf_path && signedMap.get(it.id) ? (
             <div className="mt-4 flex items-center gap-3 text-xs">
               <a
                 href={signedMap.get(it.id)!}
@@ -90,9 +86,9 @@ export async function ResearchList({ items, isOwner }: Props) {
               </a>
               <span className="text-slate-400">（リンクは10分間有効）</span>
             </div>
-          ) : !isOwner && it.file_name ? (
+          ) : it.pdf_path && it.file_name ? (
             <p className="mt-4 text-[11px] text-slate-400">
-              📎 {it.file_name}（本人のみダウンロード可）
+              📎 {it.file_name}（PDF の取得に失敗しました）
             </p>
           ) : null}
         </li>

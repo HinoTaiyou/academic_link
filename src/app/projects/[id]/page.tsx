@@ -7,6 +7,7 @@ import { DeleteProjectFileButton } from "@/components/projects/delete-project-fi
 import ProjectEditModal from "@/components/projects/project-edit-modal";
 import FileActions from "@/components/projects/file-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createResearchPdfSignedUrl } from "@/lib/supabase/research-pdf-signed-url";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -32,8 +33,6 @@ type ProjectFileItem = {
   figureCount: number;
   slideViewUrl: string | null;
 };
-
-const BUCKET = "research-pdfs";
 
 export default async function ProjectDetailPage({ params }: Props) {
   const { id: projectId } = await params;
@@ -176,11 +175,8 @@ export default async function ProjectDetailPage({ params }: Props) {
   const signedEntries = await Promise.all(
     files.map(async (file) => {
       if (!file.storagePath) return [file.id, null] as const;
-      const { data, error } = await dataClient.storage
-        .from(BUCKET)
-        .createSignedUrl(file.storagePath, 60 * 10);
-      if (error || !data) return [file.id, null] as const;
-      return [file.id, data.signedUrl] as const;
+      const url = await createResearchPdfSignedUrl(file.storagePath, 60 * 10);
+      return [file.id, url] as const;
     }),
   );
 
