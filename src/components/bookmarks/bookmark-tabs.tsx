@@ -19,10 +19,10 @@ export default function BookmarkTabs({
   projects: ProjectBookmark[];
   files: FileBookmark[];
 }) {
+  // Merge `research` + `projects` into a single tab for simpler UI
   const tabs = [
     { key: "profiles", label: "研究者", count: profiles.length },
-    { key: "research", label: "研究", count: posts.length },
-    { key: "projects", label: "プロジェクト", count: projects.length },
+    { key: "projects", label: "プロジェクト・研究", count: projects.length + posts.length },
     { key: "files", label: "資料", count: files.length },
   ] as const;
 
@@ -61,26 +61,9 @@ export default function BookmarkTabs({
           </div>
         ) : null}
 
-        {active === "research" ? (
-          <div className="space-y-3">
-            {posts.length === 0 ? (
-              <p className="text-sm text-[var(--al-muted)]">ブックマークされた研究がありません。</p>
-            ) : (
-              posts.map((p) => (
-                <article key={p.id} className="al-project-card">
-                  <h3 className="text-lg font-semibold">{p.title}</h3>
-                  <p className="text-sm text-[var(--al-muted)]">{p.summary}</p>
-                  <div className="mt-2 flex items-center justify-end">
-                    <Link href={`/research/${p.id}`} className="text-sm text-[var(--al-accent)]">表示</Link>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        ) : null}
-
         {active === "projects" ? (
           <div className="space-y-3">
+            {/* Projects first */}
             {projects.length === 0 ? (
               <p className="text-sm text-[var(--al-muted)]">ブックマークされたプロジェクトはありません。</p>
             ) : (
@@ -94,6 +77,24 @@ export default function BookmarkTabs({
                 </article>
               ))
             )}
+
+            {/* Divider + Research posts */}
+            <div className="mt-4 border-t border-[var(--al-border)] pt-4">
+              <h3 className="text-sm font-semibold">研究投稿</h3>
+              {posts.length === 0 ? (
+                <p className="text-sm text-[var(--al-muted)]">ブックマークされた研究がありません。</p>
+              ) : (
+                posts.map((p) => (
+                  <article key={p.id} className="al-project-card mt-3">
+                    <h3 className="text-lg font-semibold">{p.title}</h3>
+                    <p className="text-sm text-[var(--al-muted)]">{p.summary}</p>
+                    <div className="mt-2 flex items-center justify-end">
+                      <Link href={`/research/${p.id}`} className="text-sm text-[var(--al-accent)]">表示</Link>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
           </div>
         ) : null}
 
