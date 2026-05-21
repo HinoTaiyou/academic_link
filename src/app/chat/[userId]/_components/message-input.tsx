@@ -15,6 +15,7 @@ export function MessageInput({ myId, partnerId, onMessageSent }: Props) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isComposing, setIsComposing] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -68,7 +69,8 @@ export function MessageInput({ myId, partnerId, onMessageSent }: Props) {
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // If IME composition is active, do not treat Enter as send.
+    if (e.key === "Enter" && !e.shiftKey && !isComposing) {
       e.preventDefault();
       e.currentTarget.form?.requestSubmit();
     }
@@ -98,6 +100,8 @@ export function MessageInput({ myId, partnerId, onMessageSent }: Props) {
             disabled={isSubmitting}
             placeholder="メッセージを入力…"
             onKeyDown={handleKeyDown}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             onInput={handleInput}
             className="al-auth-input min-h-11 max-h-[7.5rem] flex-1 resize-none py-2.5 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
           />
