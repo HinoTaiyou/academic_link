@@ -124,6 +124,14 @@ export function ResearchNewForm({
         setClientError(null);
       }}
     >
+      {/* Dummy hidden input to discourage browser autofill suggestions */}
+      <input
+        aria-hidden
+        tabIndex={-1}
+        style={{ position: "absolute", left: -9999, width: 1, height: 1, overflow: "hidden" }}
+        name="no_autocomplete"
+        autoComplete="off"
+      />
       <input type="hidden" name="input_type" value={mode} />
 
       <div className="divide-y divide-[var(--al-border)]">
@@ -163,6 +171,11 @@ export function ResearchNewForm({
                 maxLength={80}
                 placeholder="例: LLMによる文献レビュー"
                 className={fieldClass}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                aria-autocomplete="none"
               />
             </div>
           ) : (
@@ -237,6 +250,11 @@ export function ResearchNewForm({
                   onChange={(e) => setSlideViewUrl(e.target.value)}
                   placeholder="https://docs.google.com/presentation/d/..."
                   className={fieldClass}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  aria-autocomplete="none"
                 />
                 <p className="text-xs leading-relaxed text-[var(--al-muted)]">
                   共有は「リンクを知っている全員が閲覧可」に。プロジェクト画面でスライド形式のまま表示されます。
@@ -364,6 +382,11 @@ function DraftEditor({
                   : "例: LLM による文献レビュー"
               }
               className={fieldClass}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              aria-autocomplete="none"
             />
             <p className="text-xs text-[var(--al-muted)]">
               プロジェクトの資料一覧に表示される名前です。
@@ -401,6 +424,11 @@ function DraftEditor({
               onChange={(e) => setTags(e.target.value)}
               placeholder="例: 機械学習, Python, 自然言語処理"
               className={fieldClass}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              aria-autocomplete="none"
             />
           </div>
         </section>

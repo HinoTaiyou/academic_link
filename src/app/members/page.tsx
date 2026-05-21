@@ -14,6 +14,7 @@ import {
   type MemberProfileRow,
 } from "./_lib/match";
 import { createClient } from "@/lib/supabase/server";
+import ClientSearchInput from "@/components/search/search-input";
 
 export const metadata = {
   title: "メンバー検索 | Academic Link",
@@ -135,17 +136,8 @@ export default async function MembersPage({ searchParams }: PageProps) {
           <div className="space-y-5 border-b border-[var(--al-border)] bg-[var(--al-surface)]/50 p-4 sm:p-5">
             <form method="get" className="mb-3" autoComplete="off">
                 <div className="flex gap-2">
-                  <input
-                    name="q"
-                    defaultValue={rawQ}
-                    placeholder="学籍番号・名前で検索"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    aria-autocomplete="none"
-                    className="flex-1 rounded border px-3 py-2"
-                  />
+                  {/* client component prevents autofill by keeping readOnly until focus */}
+                  <ClientSearchInput name="q" defaultValue={rawQ} placeholder="学籍番号・名前で検索" className="flex-1 rounded border px-3 py-2" />
                   <button type="submit" className="al-btn-outline">検索</button>
                 </div>
               </form>

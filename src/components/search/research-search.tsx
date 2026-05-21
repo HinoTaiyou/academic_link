@@ -8,6 +8,7 @@ type Post = { id: string; title: string; summary: string | null; created_at: str
 
 export default function ResearchSearch() {
   const [q, setQ] = useState("");
+  const [randSearchName] = useState(() => "research_q_" + Math.random().toString(36).slice(2, 8));
   const [results, setResults] = useState<Post[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -35,6 +36,12 @@ export default function ResearchSearch() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="検索ワードを入力"
           className="flex-1 rounded border px-3 py-2"
+          name={randSearchName}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          aria-autocomplete="none"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !isComposing) {
               e.preventDefault();

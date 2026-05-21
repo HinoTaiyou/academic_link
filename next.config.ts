@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  experimental: {
+    serverActions: {
+      // Allow larger request bodies for file uploads used in server actions
+      bodySizeLimit: "20 MB",
+    },
+  },
 };
 
 export default nextConfig;
