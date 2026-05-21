@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import ChatUnreadBadge from "@/components/chat/chat-unread-badge";
 import { NewsSection } from "./_components/news-section";
 import { getNewsForInterests, getPopularNews } from "./_lib/news";
 import { createClient } from "@/lib/supabase/server";
@@ -45,9 +44,7 @@ export default async function DashboardPage() {
       }}
     >
       <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-10">
-        <div className="flex items-center justify-end">
-          <ChatUnreadBadge />
-        </div>
+        {/* Chat unread badge removed from dashboard (duplicate with sidebar) */}
         <NewsSection
           variant="interest"
           title="あなたの興味に基づくニュース"
