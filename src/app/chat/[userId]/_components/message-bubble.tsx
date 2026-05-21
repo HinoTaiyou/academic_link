@@ -25,15 +25,17 @@ export function MessageBubble({ message, isMe }: Props) {
         )}
       >
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
-        <time
-          dateTime={message.createdAt}
-          className={cn(
-            "mt-1 block text-right text-[10px]",
-            isMe ? "text-white/70" : "text-[var(--al-muted)]",
-          )}
-        >
-          {formatTime(message.createdAt)}
-        </time>
+        <div className="mt-1 flex items-center justify-end gap-2 text-[10px]">
+          <time
+            dateTime={message.createdAt}
+            className={cn(isMe ? "text-white/70" : "text-[var(--al-muted)]")}
+          >
+            {formatTime(message.createdAt)}
+          </time>
+          {isMe && message.readAt ? (
+            <span className="text-[10px] font-medium text-white/80">既読</span>
+          ) : null}
+        </div>
       </div>
     </div>
   );

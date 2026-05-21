@@ -39,47 +39,55 @@ export function ChatMessages({ myId, partnerId, initialMessages }: Props) {
   useEffect(() => {
     const supabase = createClient();
     const channelName = `chat:${myId}:${partnerId}:${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          const row = payload.new as {
-            id: string;
-            from_id: string;
-            to_id: string;
-            content: string;
-            created_at: string;
-            read_at: string | null;
-          };
+    const channel = supabase.channel(channelName);
 
-          const isRelevant =
-            (row.from_id === myId && row.to_id === partnerId) ||
-            (row.from_id === partnerId && row.to_id === myId);
+    // Handle new messages
+    channel.on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "messages" },
+      (payload) => {
+        const row = payload.new as any;
+        const isRelevant =
+          (row.from_id === myId && row.to_id === partnerId) ||
+          (row.from_id === partnerId && row.to_id === myId);
+        if (!isRelevant) return;
+        const msg: MessageData = {
+          id: row.id,
+          fromId: row.from_id,
+          content: row.content,
+          createdAt: row.created_at,
+          readAt: row.read_at,
+        };
+        appendMessage(msg);
+        if (row.from_id === partnerId) {
+          markAsReadAction(partnerId);
+        }
+      },
+    );
 
-          if (!isRelevant) return;
+    // Handle updates (e.g., read_at changes)
+    channel.on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "messages" },
+      (payload) => {
+        const row = payload.new as any;
+        const isRelevant =
+          (row.from_id === myId && row.to_id === partnerId) ||
+          (row.from_id === partnerId && row.to_id === myId);
+        if (!isRelevant) return;
 
-          const msg: MessageData = {
-            id: row.id,
-            fromId: row.from_id,
-            content: row.content,
-            createdAt: row.created_at,
-            readAt: row.read_at,
-          };
+        // If a message we have in state was updated (e.g., read_at set), update it
+        setMessages((prev) => {
+          const idx = prev.findIndex((m) => m.id === row.id);
+          if (idx === -1) return prev;
+          const copy = [...prev];
+          copy[idx] = { ...copy[idx], readAt: row.read_at };
+          return copy;
+        });
+      },
+    );
 
-          appendMessage(msg);
-
-          if (row.from_id === partnerId) {
-            markAsReadAction(partnerId);
-          }
-        },
-      )
-      .subscribe();
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
