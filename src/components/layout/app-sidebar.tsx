@@ -95,15 +95,19 @@ export function AppSidebar({
         <SidebarProjects projects={quickProjects} />
       </nav>
 
-      <div className="mt-4 border-t border-[color-mix(in_srgb,var(--al-accent)_12%,var(--al-border))] pt-4">
+      <div className="mt-4 shrink-0 border-t border-[color-mix(in_srgb,var(--al-accent)_18%,var(--al-border))] pt-4">
         <form action={logoutAction}>
           <Button
             type="submit"
-            variant="ghost"
-            size="sm"
-            className="h-9 w-full justify-start gap-2.5 px-2 text-sm font-normal text-[var(--al-muted)] hover:bg-white/80 hover:text-[var(--al-ink)]"
+            variant="outline"
+            className="h-11 w-full justify-start gap-3 rounded-xl border-[color-mix(in_srgb,var(--al-accent)_22%,var(--al-border))] bg-white px-3 text-sm font-medium text-[var(--al-ink)] shadow-sm hover:border-[color-mix(in_srgb,var(--al-accent)_35%,var(--al-border))] hover:bg-white hover:text-[var(--al-ink)]"
           >
-            <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--al-accent)_8%,#fff)] text-[var(--al-accent)] ring-1 ring-[color-mix(in_srgb,var(--al-accent)_20%,var(--al-border))]"
+              aria-hidden
+            >
+              <LogOut className="h-4 w-4" strokeWidth={1.75} />
+            </span>
             ログアウト
           </Button>
         </form>
