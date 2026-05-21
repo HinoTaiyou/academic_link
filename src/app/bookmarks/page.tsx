@@ -67,16 +67,9 @@ export default async function BookmarksPage() {
     return (k && grouped[k]) || [];
   };
 
-  const researchIds = getGroupIds("research_post");
   const projectIds = getGroupIds("project");
 
-  const [postsByIdRes, projPostsRes, projectsRes, filesRes, profilesRes] = await Promise.all([
-    researchIds.length
-      ? supabase.from("research_posts").select("id,title,summary,tags,created_at").in("id", researchIds)
-      : Promise.resolve({ data: [] }),
-    projectIds.length
-      ? supabase.from("research_posts").select("id,title,summary,tags,created_at,project_id").in("project_id", projectIds)
-      : Promise.resolve({ data: [] }),
+  const [projectsRes, filesRes, profilesRes] = await Promise.all([
     projectIds.length
       ? supabase.from("projects").select("id,name,description,created_at,owner_id").in("id", projectIds)
       : Promise.resolve({ data: [] }),
@@ -94,12 +87,7 @@ export default async function BookmarksPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
-  // Merge posts fetched by direct bookmark and posts that belong to bookmarked projects.
-  const postsMap = new Map<string, ResearchBookmark>();
-  (postsByIdRes.data ?? []).forEach((r: any) => postsMap.set(r.id as string, { id: r.id, title: r.title, summary: r.summary }));
-  (projPostsRes.data ?? []).forEach((r: any) => postsMap.set(r.id as string, { id: r.id, title: r.title, summary: r.summary }));
-
-  const posts = Array.from(postsMap.values()) as ResearchBookmark[];
+  const posts: ResearchBookmark[] = []; // research posts are intentionally not shown in bookmarks
   const projects = (projectsRes.data ?? []) as ProjectBookmark[];
   const files = (filesRes.data ?? []) as FileBookmark[];
   const profiles = (profilesRes.data ?? []) as ProfileBookmark[];
