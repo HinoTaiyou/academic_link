@@ -10,6 +10,7 @@ export default function ResearchSearch() {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Post[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   async function doSearch(page = 1) {
     if (!q.trim()) return;
@@ -34,6 +35,14 @@ export default function ResearchSearch() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="検索ワードを入力"
           className="flex-1 rounded border px-3 py-2"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !isComposing) {
+              e.preventDefault();
+              void doSearch();
+            }
+          }}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
         />
         <Button variant="outline" size="sm" onClick={() => void doSearch()} disabled={loading || q.trim() === ""}>
           {loading ? "検索中…" : "検索"}
