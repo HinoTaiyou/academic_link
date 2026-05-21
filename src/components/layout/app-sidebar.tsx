@@ -7,10 +7,11 @@ import {
   Home,
   LogOut,
   MessageSquare,
-  Pin,
   Search,
   User,
 } from "lucide-react";
+import type { SidebarProject } from "@/lib/projects/load-sidebar-projects";
+import { SidebarProjects } from "@/components/layout/sidebar-projects";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,7 @@ type Props = {
   profile: SidebarProfile;
   active?: NavKey;
   className?: string;
-  quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
+  quickProjects?: SidebarProject[];
   chatUnreadCount?: number;
 };
 
@@ -48,7 +49,13 @@ const NAV_ITEMS: Array<{
   { key: "members", href: "/members", label: "メンバー検索", icon: Search },
 ];
 
-export function AppSidebar({ profile, active, className, quickProjects, chatUnreadCount = 0 }: Props) {
+export function AppSidebar({
+  profile,
+  active,
+  className,
+  quickProjects = [],
+  chatUnreadCount = 0,
+}: Props) {
   return (
     <aside
       className={cn(
@@ -89,33 +96,7 @@ export function AppSidebar({ profile, active, className, quickProjects, chatUnre
           プロフィール
         </NavItem>
 
-        {quickProjects && quickProjects.length > 0 ? (
-          <>
-            <p className="mb-2 mt-6 px-2 text-xs font-medium text-[var(--al-muted)]">
-              プロジェクト
-            </p>
-            {quickProjects.slice(0, 6).map((project) => (
-              <Link
-                key={project.id}
-                href={`/research/new?projectId=${project.id}`}
-                className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-[var(--al-muted)] transition-colors hover:bg-white/80 hover:text-[var(--al-ink)]"
-              >
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full bg-[var(--al-accent)] opacity-70"
-                  aria-hidden
-                />
-                <span className="min-w-0 flex-1 truncate">{project.name}</span>
-                {project.pinned ? (
-                  <Pin
-                    className="h-3.5 w-3.5 shrink-0 text-[var(--al-accent)]"
-                    strokeWidth={1.75}
-                    aria-label="ピン留め"
-                  />
-                ) : null}
-              </Link>
-            ))}
-          </>
-        ) : null}
+        <SidebarProjects projects={quickProjects} />
       </nav>
 
       <div className="mt-4 border-t border-[color-mix(in_srgb,var(--al-accent)_12%,var(--al-border))] pt-4">

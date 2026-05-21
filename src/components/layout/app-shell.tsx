@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { AppSidebar, type SidebarProfile } from "@/components/layout/app-sidebar";
 import { createClient } from "@/lib/supabase/client";
+import type { SidebarProject } from "@/lib/projects/load-sidebar-projects";
 
 type Props = {
   profile: SidebarProfile;
   active?: "dashboard" | "profile" | "members" | "research" | "research_search" | "chat" | "bookmarks";
-  quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
+  quickProjects?: SidebarProject[];
   children: React.ReactNode;
 };
 

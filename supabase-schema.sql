@@ -333,6 +333,8 @@ using (auth.uid() = user_id);
 -- Then run the storage policies below.
 
 -- Storage policies: research-pdfs
+-- ※ storage.objects への ALTER は実行しない（must be owner エラー回避）
+-- ※ 詳細・UI手順は supabase/storage-research-pdfs.sql を参照
 -- Path convention: "<auth.uid()>/<filename>"
 drop policy if exists "research_pdfs_select_own" on storage.objects;
 create policy "research_pdfs_select_own"
@@ -340,21 +342,7 @@ on storage.objects for select
 to authenticated
 using (
   bucket_id = 'research-pdfs'
-  and (
-    -- legacy path: <uid>/<filename>
-    (storage.foldername(name))[1] = auth.uid()::text
-    or
-    -- project path: <uid>/<project_id>/<filename>
-    (
-      (storage.foldername(name))[1] = auth.uid()::text
-      and exists (
-        select 1
-        from public.projects p
-        where p.id::text = (storage.foldername(name))[2]
-          and p.owner_id = auth.uid()
-      )
-    )
-  )
+  and (storage.foldername(name))[1] = auth.uid()::text
 );
 
 drop policy if exists "research_pdfs_insert_own" on storage.objects;
@@ -363,21 +351,20 @@ on storage.objects for insert
 to authenticated
 with check (
   bucket_id = 'research-pdfs'
-  and (
-    -- legacy path (backward compatibility)
-    (storage.foldername(name))[1] = auth.uid()::text
-    or
-    -- strict project path
-    (
-      (storage.foldername(name))[1] = auth.uid()::text
-      and exists (
-        select 1
-        from public.projects p
-        where p.id::text = (storage.foldername(name))[2]
-          and p.owner_id = auth.uid()
-      )
-    )
-  )
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "research_pdfs_update_own" on storage.objects;
+create policy "research_pdfs_update_own"
+on storage.objects for update
+to authenticated
+using (
+  bucket_id = 'research-pdfs'
+  and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+  bucket_id = 'research-pdfs'
+  and (storage.foldername(name))[1] = auth.uid()::text
 );
 
 drop policy if exists "research_pdfs_delete_own" on storage.objects;
@@ -386,19 +373,7 @@ on storage.objects for delete
 to authenticated
 using (
   bucket_id = 'research-pdfs'
-  and (
-    (storage.foldername(name))[1] = auth.uid()::text
-    or
-    (
-      (storage.foldername(name))[1] = auth.uid()::text
-      and exists (
-        select 1
-        from public.projects p
-        where p.id::text = (storage.foldername(name))[2]
-          and p.owner_id = auth.uid()
-      )
-    )
-  )
+  and (storage.foldername(name))[1] = auth.uid()::text
 );
 
 -- RLS

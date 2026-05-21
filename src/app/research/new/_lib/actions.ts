@@ -8,6 +8,8 @@ import {
   analyzeResearchText,
   type ResearchDraft,
 } from "./gemini";
+import { isLikelySlideViewUrl } from "@/lib/research/slide-url";
+import { uploadResearchPdf } from "@/lib/supabase/upload-research-pdf";
 import { extractPdfText } from "./pdf";
 
 const BUCKET = "research-pdfs";
@@ -20,8 +22,10 @@ export type AnalyzeState =
       rawText: string;
       fileName: string | null;
       pdfPath: string | null;
+      slideViewUrl: string | null;
       projectId: string;
       projectName: string;
+      inputMode: "pdf" | "slides";
     }
   | { ok: false; error: string }
   | Record<string, never>;
@@ -37,7 +41,7 @@ function isProjectsTableMissing(error: unknown): boolean {
 function toAnalyzeErrorMessage(err: unknown): string {
   const msg = err instanceof Error ? err.message : "解析に失敗しました。";
   if (/detached\s+arraybuffer/i.test(msg)) {
-    return "PDF の読み取り処理でエラーが発生しました。別の PDF を試すか、テキスト入力をご利用ください。";
+    return "PDF の読み取り処理でエラーが発生しました。別の PDF をお試しください。";
   }
   return msg;
 }
@@ -126,6 +130,58 @@ async function resolveProjectForUser(params: {
   return { ok: true, id: created.id, name: created.name };
 }
 
+async function ingestPdfBytes(params: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  userId: string;
+  projectId: string;
+  projectName: string;
+  fileBytes: Uint8Array;
+  fileName: string;
+  slideViewUrl: string | null;
+  inputMode: "pdf" | "slides";
+}): Promise<Extract<AnalyzeState, { ok: true }>> {
+  const { supabase, userId, projectId, projectName, fileBytes, fileName, slideViewUrl, inputMode } =
+    params;
+
+  const rawText = await extractPdfText(fileBytes.slice());
+  const { pdfPath } = await uploadResearchPdf({
+    supabase,
+    userId,
+    projectId,
+    fileBytes,
+    fileName,
+  });
+
+  let draft: ResearchDraft;
+  try {
+    draft = await analyzeResearchPdf({
+      pdfBytes: fileBytes.slice(),
+      fileName,
+      fallbackText: rawText,
+    });
+  } catch (pdfAnalyzeError) {
+    if (!rawText) {
+      console.error("pdf analyze fallback failed (no text)", pdfAnalyzeError);
+      throw new Error(
+        "PDF 解析に失敗しました。図表中心の PDF は画質やレイアウトにより解析できない場合があります。別の PDF をお試しください。",
+      );
+    }
+    draft = await analyzeResearchText(rawText);
+  }
+
+  return {
+    ok: true,
+    draft,
+    rawText,
+    fileName,
+    pdfPath,
+    slideViewUrl,
+    projectId,
+    projectName,
+    inputMode,
+  };
+}
+
 export async function analyzeResearchAction(
   _prev: AnalyzeState,
   formData: FormData,
@@ -137,9 +193,9 @@ export async function analyzeResearchAction(
   if (!user) return { ok: false, error: "ログイン情報が確認できません。" };
 
   const inputType = String(formData.get("input_type") ?? "pdf");
-  let rawText = "";
-  let fileName: string | null = null;
-  let pdfPath: string | null = null;
+  const slideViewUrlRaw = String(formData.get("slide_view_url") ?? "").trim();
+  const slideViewUrl =
+    slideViewUrlRaw && isLikelySlideViewUrl(slideViewUrlRaw) ? slideViewUrlRaw : null;
   const projectIdRaw = String(formData.get("project_id") ?? "");
   const newProjectNameRaw = String(formData.get("new_project_name") ?? "");
 
@@ -154,6 +210,14 @@ export async function analyzeResearchAction(
       return { ok: false, error: projectResolved.error };
     }
 
+    if (inputType === "slides" && slideViewUrlRaw && !slideViewUrl) {
+      return {
+        ok: false,
+        error:
+          "スライド URL の形式が正しくありません。Google スライドの「リンクを取得」URL を貼ってください。",
+      };
+    }
+
     if (inputType === "pdf") {
       const file = formData.get("pdf");
       if (!(file instanceof File) || file.size === 0) {
@@ -166,73 +230,69 @@ export async function analyzeResearchAction(
         };
       }
       const fileBytes = new Uint8Array(await file.arrayBuffer());
-      rawText = await extractPdfText(fileBytes.slice());
-
-      fileName = file.name;
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
-      const projectPath = projectResolved.id || "no-project";
-      const key = `${user.id}/${projectPath}/${Date.now()}_${safeName}`;
-      const { error: upErr } = await supabase.storage
-        .from(BUCKET)
-        .upload(key, fileBytes.slice(), {
-          contentType: file.type || "application/pdf",
-          upsert: false,
-        });
-      if (upErr) {
-        console.error("storage upload", upErr);
-        pdfPath = null;
-      } else {
-        pdfPath = key;
-      }
-
-      let draft: ResearchDraft;
-      try {
-        draft = await analyzeResearchPdf({
-          pdfBytes: fileBytes.slice(),
-          fileName,
-          fallbackText: rawText,
-        });
-      } catch (pdfAnalyzeError) {
-        if (!rawText) {
-          console.error("pdf analyze fallback failed (no text)", pdfAnalyzeError);
-          return {
-            ok: false,
-            error:
-              "PDF 解析に失敗しました。図表中心の PDF は画質やレイアウトにより解析できない場合があります。別ファイルまたはテキスト入力でお試しください。",
-          };
-        }
-        draft = await analyzeResearchText(rawText);
-      }
-
-      return {
-        ok: true,
-        draft,
-        rawText,
-        fileName,
-        pdfPath,
+      return ingestPdfBytes({
+        supabase,
+        userId: user.id,
         projectId: projectResolved.id,
         projectName: projectResolved.name,
-      };
-    } else {
-      rawText = String(formData.get("raw_text") ?? "").trim();
-      if (rawText.length < 30) {
-        return {
-          ok: false,
-          error: "テキストが短すぎます。本文を30文字以上入力してください。",
-        };
-      }
+        fileBytes,
+        fileName: file.name,
+        slideViewUrl: null,
+        inputMode: "pdf",
+      });
     }
 
-    const draft = await analyzeResearchText(rawText);
-    return {
-      ok: true,
-      draft,
-      rawText,
-      fileName,
-      pdfPath,
-      projectId: projectResolved.id,
-      projectName: projectResolved.name,
-    };
+    if (inputType === "slides") {
+      const file = formData.get("pdf");
+      const hasUpload = file instanceof File && file.size > 0;
+
+      if (!slideViewUrl && !hasUpload) {
+        return {
+          ok: false,
+          error: "スライド URL または PDF のどちらかを入力してください。",
+        };
+      }
+
+      // PDF あり → AI 解析 + Storage 保存。URL は表示用に併記可。
+      if (hasUpload) {
+        if (file.size > MAX_PDF_BYTES) {
+          return {
+            ok: false,
+            error: `ファイルサイズが大きすぎます（最大 ${Math.floor(MAX_PDF_BYTES / 1024 / 1024)}MB）。`,
+          };
+        }
+        const fileBytes = new Uint8Array(await file.arrayBuffer());
+        return ingestPdfBytes({
+          supabase,
+          userId: user.id,
+          projectId: projectResolved.id,
+          projectName: projectResolved.name,
+          fileBytes,
+          fileName: file.name,
+          slideViewUrl,
+          inputMode: "slides",
+        });
+      }
+
+      // URL のみ → スライドリンクを保存（AI には渡さない）。保存名は編集画面で入力。
+      return {
+        ok: true,
+        draft: {
+          title: "",
+          summary: "",
+          tags: [] as string[],
+        },
+        rawText: "",
+        fileName: null,
+        pdfPath: null,
+        slideViewUrl,
+        projectId: projectResolved.id,
+        projectName: projectResolved.name,
+        inputMode: "slides",
+      };
+    }
+
+    return { ok: false, error: "入力方法が正しくありません。" };
   } catch (err) {
     console.error("analyzeResearchAction", err);
     return { ok: false, error: toAnalyzeErrorMessage(err) };
@@ -269,9 +329,25 @@ export async function saveResearchAction(
   const projectId = String(formData.get("project_id") ?? "").trim();
   const fileName = String(formData.get("file_name") ?? "").trim() || null;
   const pdfPath = String(formData.get("pdf_path") ?? "").trim() || null;
+  const slideViewUrlRaw = String(formData.get("slide_view_url") ?? "").trim();
+  const slideViewUrl =
+    slideViewUrlRaw && isLikelySlideViewUrl(slideViewUrlRaw) ? slideViewUrlRaw : null;
 
-  if (!title) return { error: "タイトルを入力してください。" };
-  if (!summary) return { error: "要約を入力してください。" };
+  if (!title) return { error: "保存名を入力してください。" };
+
+  const hadPdfUpload = Boolean(fileName && pdfPath);
+  const slideOnly = Boolean(slideViewUrl && !pdfPath && !fileName);
+
+  if (!summary && !slideOnly) {
+    return { error: "要約を入力してください。" };
+  }
+
+  if (fileName && !pdfPath) {
+    return {
+      error:
+        "PDF ファイルの保存先が見つかりません。解析からやり直すか、PDF を再アップロードしてください。",
+    };
+  }
 
   let canUseProject = Boolean(projectId);
   if (projectId) {
@@ -321,10 +397,16 @@ export async function saveResearchAction(
   }
 
   if (canUseProject) {
+    const metadata: Record<string, string> = {};
+    if (slideViewUrl) metadata.slide_view_url = slideViewUrl;
+    if (slideOnly) metadata.content_kind = "slides";
+    if (hadPdfUpload && slideViewUrl) metadata.pdf_source = "upload_with_slides";
+    else if (hadPdfUpload) metadata.pdf_source = "upload";
+
     const { error: fileErr } = await supabase.from("project_files").insert({
       project_id: projectId,
       owner_id: user.id,
-      source_type: pdfPath ? "pdf" : "text",
+      source_type: pdfPath ? "pdf" : slideViewUrl ? "other" : "text",
       title,
       summary,
       tags,
@@ -332,6 +414,7 @@ export async function saveResearchAction(
       file_name: fileName,
       storage_path: pdfPath,
       mime_type: pdfPath ? "application/pdf" : "text/plain",
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     });
     if (fileErr) {
       console.error("project_files insert", fileErr);

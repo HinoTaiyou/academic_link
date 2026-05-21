@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-// removed unused Input import
 import { useRouter } from "next/navigation";
 
 export default function ProjectEditModal({
@@ -46,14 +45,14 @@ export default function ProjectEditModal({
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        概要を編集
+        説明の編集
       </Button>
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="relative z-10 w-full max-w-xl rounded-lg bg-white p-6 shadow-lg">
-            <h3 className="text-lg font-semibold">プロジェクト概要を編集</h3>
+            <h3 className="text-lg font-semibold">プロジェクトの説明を編集</h3>
             <p className="mt-1 text-xs text-slate-500">簡潔にプロジェクトの目的や対象を説明してください。</p>
             <textarea
               className="mt-3 w-full min-h-[120px] rounded-md border border-input px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#667eea]/30"

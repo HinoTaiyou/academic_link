@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FolderOpen, MessageSquare, Pencil } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { FollowButton } from "@/components/profile/follow-button";
 import { ProfileView } from "./_components/profile-view";
 import { ProjectDashboardBrowse } from "./_components/project-dashboard-browse";
@@ -35,17 +35,12 @@ export default async function UserProfilePage({ params }: Props) {
     redirect("/login");
   }
 
-  const [{ data: profile }, { data: myProfile }, { data: researchRows }] =
+  const [{ data: profile }, { data: researchRows }] =
     await Promise.all([
       supabase
         .from("profiles")
         .select("id, real_name, department, grade, interest_tags, research_fields")
         .eq("id", id)
-        .maybeSingle(),
-      supabase
-        .from("profiles")
-        .select("real_name, department, grade, interest_tags")
-        .eq("id", user.id)
         .maybeSingle(),
       supabase
         .from("research_posts")
@@ -93,17 +88,7 @@ export default async function UserProfilePage({ params }: Props) {
         .maybeSingle();
 
   return (
-    <AppShell
-      active={isMe ? "profile" : undefined}
-      profile={{
-        id: user.id,
-        realName: myProfile?.real_name ?? null,
-        department: myProfile?.department ?? null,
-        grade: myProfile?.grade ?? null,
-        interestTags: myProfile?.interest_tags ?? [],
-        email: user.email ?? null,
-      }}
-    >
+    <AuthenticatedAppShell active={isMe ? "profile" : undefined}>
       <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 md:py-10">
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -211,6 +196,6 @@ export default async function UserProfilePage({ params }: Props) {
         )}
         </div>
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { FileText, FolderOpen } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { ResearchMaterialPanel } from "@/components/research/research-material-panel";
+import { DeleteProjectFileButton } from "@/components/projects/delete-project-file-button";
 import ProjectEditModal from "@/components/projects/project-edit-modal";
 import FileActions from "@/components/projects/file-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,6 +30,7 @@ type ProjectFileItem = {
   storagePath: string | null;
   mimeType: string | null;
   figureCount: number;
+  slideViewUrl: string | null;
 };
 
 const BUCKET = "research-pdfs";
@@ -43,12 +46,6 @@ export default async function ProjectDetailPage({ params }: Props) {
   if (!user) {
     redirect("/login");
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("real_name, department, grade, interest_tags")
-    .eq("id", user.id)
-    .maybeSingle();
 
   let project: {
     id: string;
@@ -95,7 +92,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const primaryFilesRes = await dataClient
     .from("project_files")
     .select(
-      "id, created_at, source_type, title, summary, tags, raw_text, file_name, storage_path, mime_type, figure_notes",
+      "id, created_at, source_type, title, summary, tags, raw_text, file_name, storage_path, mime_type, figure_notes, metadata",
     )
     .eq("project_id", projectId)
     .eq("owner_id", ownerId)
@@ -173,6 +170,7 @@ export default async function ProjectDetailPage({ params }: Props) {
     storagePath: (row.storage_path as string | null) ?? null,
     mimeType: (row.mime_type as string | null) ?? null,
     figureCount: Array.isArray(row.figure_notes) ? row.figure_notes.length : 0,
+    slideViewUrl: parseSlideViewUrl(row.metadata),
   }));
 
   const signedEntries = await Promise.all(
@@ -187,8 +185,6 @@ export default async function ProjectDetailPage({ params }: Props) {
   );
 
   const signedMap = new Map<string, string | null>(signedEntries);
-
-  const interestTags = (profile?.interest_tags ?? []) as string[];
 
   const projectStatusClient = createAdminClient() ?? supabase;
   const [projectBookmarkStatus, projectBookmarkCountRes] = await Promise.all([
@@ -208,7 +204,6 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   const projectBookmarkStatusData = projectBookmarkStatus.data;
 
-  // --- preload per-file bookmark existence to hydrate FileActions ---
   const fileIds = files.map((f) => f.id);
   const fileBookmarkedMap = new Map<string, boolean>();
   if (fileIds.length > 0) {
@@ -223,17 +218,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   }
 
   return (
-    <AppShell
-      active="profile"
-      profile={{
-        id: user.id,
-        realName: profile?.real_name ?? null,
-        department: profile?.department ?? null,
-        grade: profile?.grade ?? null,
-        interestTags,
-        email: user.email ?? null,
-      }}
-    >
+    <AuthenticatedAppShell active="profile">
       <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 md:py-10">
         <div className="mx-auto w-full max-w-4xl space-y-6">
           <section className="al-glass-card overflow-hidden">
@@ -267,21 +252,19 @@ export default async function ProjectDetailPage({ params }: Props) {
               >
                 ← プロフィールに戻る
               </Link>
-              <div className="flex flex-wrap items-start gap-3">
+              <div className="space-y-2">
                 {project.description ? (
-                  <p className="min-w-0 flex-1 text-sm leading-relaxed text-[var(--al-muted)]">
+                  <p className="text-sm leading-relaxed text-[var(--al-muted)]">
                     {project.description}
                   </p>
                 ) : (
                   <p className="text-sm text-[var(--al-muted)]">説明は未設定です。</p>
                 )}
                 {isOwner ? (
-                  <div className="shrink-0">
-                    <ProjectEditModal
-                      projectId={project.id}
-                      initialDescription={project.description}
-                    />
-                  </div>
+                  <ProjectEditModal
+                    projectId={project.id}
+                    initialDescription={project.description}
+                  />
                 ) : null}
                 <div className="shrink-0">
                   <FileActions
@@ -350,54 +333,26 @@ export default async function ProjectDetailPage({ params }: Props) {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="min-w-0 flex-1 text-sm font-semibold leading-snug text-[var(--al-ink)] sm:text-base">{file.title}</h3>
-                      <span className="shrink-0 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-medium text-[var(--al-muted)] ring-1 ring-[var(--al-border)]">
-                        {sourceLabel(file.sourceType)}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-medium text-[var(--al-muted)] ring-1 ring-[var(--al-border)]">
+                          {sourceLabel(file.sourceType, file.slideViewUrl, Boolean(signedUrl))}
+                        </span>
+                        {isOwner ? (
+                          <DeleteProjectFileButton
+                            projectId={project.id}
+                            fileId={file.id}
+                            fileTitle={file.title}
+                          />
+                        ) : null}
+                      </div>
                     </div>
-
-                    {file.summary ? (
-                      <p className="text-sm leading-relaxed text-[var(--al-muted)]">{file.summary}</p>
-                    ) : (
-                      <p className="text-sm text-[var(--al-muted)]">要約は未設定です。</p>
-                    )}
-
-                    {/* タグ表示は不要のため削除 */}
 
                     <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--al-muted)]">
                       <span>登録日: {formatDate(file.createdAt)}</span>
                       <span>図表メモ: {file.figureCount}件</span>
-                      {file.fileName ? <span>ファイル: {file.fileName}</span> : null}
-                    </div>
-
-                    {file.rawText ? (
-                      <details className="al-synopsis-box">
-                        <summary className="cursor-pointer text-xs font-medium text-[var(--al-ink)]">
-                          解析対象テキストを表示
-                        </summary>
-                        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-[var(--al-muted)]">
-                          {clipText(file.rawText, 2400)}
-                        </p>
-                      </details>
-                    ) : null}
-
-                    <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--al-border)]/80 pt-3">
-                      {signedUrl ? (
-                        <a
-                          href={signedUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs font-medium text-[var(--al-accent)] hover:underline"
-                        >
-                          PDFを開く
-                        </a>
-                      ) : null}
-                      {isOwner ? (
-                        <Link
-                          href={`/research/new?projectId=${project.id}`}
-                          className="text-xs font-medium text-[var(--al-muted)] hover:text-[var(--al-accent)]"
-                        >
-                          このプロジェクトに追加 →
-                        </Link>
+                      {file.fileName ? <span>PDF: {file.fileName}</span> : null}
+                      {file.storagePath ? (
+                        <span className="text-emerald-700">保存済み</span>
                       ) : null}
                       {/* like / bookmark actions */}
                       <div className="shrink-0">
@@ -410,6 +365,16 @@ export default async function ProjectDetailPage({ params }: Props) {
                         />
                       </div>
                     </div>
+
+                    <ResearchMaterialPanel
+                      title={file.title}
+                      summary={file.summary}
+                      tags={file.tags}
+                      slideViewUrl={file.slideViewUrl}
+                      pdfUrl={signedUrl}
+                      fileName={file.fileName}
+                      sourceType={file.sourceType}
+                    />
                   </article>
                 );
               })}
@@ -419,7 +384,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           </section>
         </div>
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }
 
@@ -433,7 +398,13 @@ function formatDate(iso: string): string {
   });
 }
 
-function sourceLabel(sourceType: string): string {
+function sourceLabel(
+  sourceType: string,
+  slideViewUrl: string | null,
+  hasStoredPdf: boolean,
+): string {
+  if (hasStoredPdf) return "PDF";
+  if (slideViewUrl && sourceType !== "pdf") return "スライド";
   switch (sourceType) {
     case "pdf":
       return "PDF";
@@ -446,7 +417,9 @@ function sourceLabel(sourceType: string): string {
   }
 }
 
-function clipText(text: string, max: number): string {
-  if (text.length <= max) return text;
-  return `${text.slice(0, max)}\n\n...（続きは研究登録画面で確認できます）`;
+
+function parseSlideViewUrl(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const url = (metadata as Record<string, unknown>).slide_view_url;
+  return typeof url === "string" && url.trim() ? url.trim() : null;
 }

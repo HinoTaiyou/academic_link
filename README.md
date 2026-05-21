@@ -133,7 +133,8 @@ src/
 |------|------|
 | ログインできない | `.env.local` を確認 → `npm run dev` 再起動 |
 | `profiles upsert` エラー | SQL Editor で `supabase-schema.sql` を再実行 |
-| PDF アップロード失敗 | Storage に `research-pdfs` バケットが存在するか確認 |
+| PDF アップロード失敗（RLS） | `supabase/storage-research-pdfs.sql` を SQL Editor で実行。または `.env.local` に `SUPABASE_SERVICE_ROLE_KEY` を追加 |
+| PDF アップロード失敗（バケット） | Storage に `research-pdfs` バケット（Private）を作成 |
 | AI 解析が動かない | `GEMINI_API_KEY` が `.env.local` にあるか。dev を再起動したか |
 | サイドバーが出ない | ブラウザ幅 768px 以上で表示。狭いときは ≡ をタップ |
 

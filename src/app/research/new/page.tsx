@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { FlaskConical } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { ResearchNewForm } from "./_components/research-new-form";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,12 +23,6 @@ export default async function NewResearchPage({ searchParams }: Props) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("real_name, department, grade, interest_tags")
-    .eq("id", user.id)
-    .maybeSingle();
-
   const { data: projectsData } = await supabase
     .from("projects")
     .select("id, name")
@@ -43,18 +37,7 @@ export default async function NewResearchPage({ searchParams }: Props) {
     : undefined;
 
   return (
-    <AppShell
-      active="research"
-      quickProjects={projects.map((p) => ({ id: p.id, name: p.name }))}
-      profile={{
-        id: user.id,
-        realName: profile?.real_name ?? null,
-        department: profile?.department ?? null,
-        grade: profile?.grade ?? null,
-        interestTags: profile?.interest_tags ?? [],
-        email: user.email ?? null,
-      }}
-    >
+    <AuthenticatedAppShell active="research">
       <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 sm:px-6 sm:py-10">
         <header className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
@@ -72,8 +55,7 @@ export default async function NewResearchPage({ searchParams }: Props) {
                   研究を登録
                 </h1>
                 <p className="mt-1 text-sm leading-relaxed text-[var(--al-muted)]">
-                  PDF（論文・スライド等）またはテキストを AI
-                  で要約し、プロフィールから他のメンバーに見てもらえる形にします。
+                  PDF またはスライド URL で登録できます。
                 </p>
               </div>
             </div>
@@ -85,6 +67,6 @@ export default async function NewResearchPage({ searchParams }: Props) {
           initialProjectId={activeProjectId}
         />
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

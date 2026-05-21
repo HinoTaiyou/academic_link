@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, User } from "lucide-react";
 import { DefaultAvatar } from "@/components/profile/default-avatar";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { ChatMessages } from "./_components/chat-messages";
 import type { MessageData } from "./_components/message-bubble";
@@ -27,17 +27,11 @@ export default async function ChatRoomPage({ params }: Props) {
 
   if (partnerId === user.id) redirect("/chat");
 
-  const [{ data: partnerProfile }, { data: myProfile }, { data: rawMessages }] =
-    await Promise.all([
+  const [{ data: partnerProfile }, { data: rawMessages }] = await Promise.all([
       supabase
         .from("profiles")
         .select("id, real_name, department, grade")
         .eq("id", partnerId)
-        .maybeSingle(),
-      supabase
-        .from("profiles")
-        .select("real_name, department, grade, interest_tags")
-        .eq("id", user.id)
         .maybeSingle(),
       supabase
         .from("messages")
@@ -61,17 +55,7 @@ export default async function ChatRoomPage({ params }: Props) {
   }));
 
   return (
-    <AppShell
-      active="chat"
-      profile={{
-        id: user.id,
-        realName: myProfile?.real_name ?? null,
-        department: myProfile?.department ?? null,
-        grade: myProfile?.grade ?? null,
-        interestTags: myProfile?.interest_tags ?? [],
-        email: user.email ?? null,
-      }}
-    >
+    <AuthenticatedAppShell active="chat">
       <div className="flex min-h-0 flex-1 flex-col bg-[var(--al-surface)]">
         <header className="sticky top-0 z-10 border-b border-[var(--al-border)] bg-white/90 px-3 py-3 backdrop-blur sm:px-5">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
@@ -113,6 +97,6 @@ export default async function ChatRoomPage({ params }: Props) {
           initialMessages={messages}
         />
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

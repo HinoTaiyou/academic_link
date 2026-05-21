@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageSquare, Users } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { ConversationItem } from "./_components/conversation-item";
 import { getConversations } from "./_lib/queries";
@@ -18,26 +18,10 @@ export default async function ChatPage() {
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("real_name, department, grade, interest_tags")
-    .eq("id", user.id)
-    .maybeSingle();
-
   const conversations = await getConversations(user.id);
 
   return (
-    <AppShell
-      active="chat"
-      profile={{
-        id: user.id,
-        realName: profile?.real_name ?? null,
-        department: profile?.department ?? null,
-        grade: profile?.grade ?? null,
-        interestTags: profile?.interest_tags ?? [],
-        email: user.email ?? null,
-      }}
-    >
+    <AuthenticatedAppShell active="chat">
       <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 sm:px-6 sm:py-10">
         <header className="al-glass-card overflow-hidden">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
@@ -100,6 +84,6 @@ export default async function ChatPage() {
           </div>
         </header>
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }

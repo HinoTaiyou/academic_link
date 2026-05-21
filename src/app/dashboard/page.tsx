@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
+import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { NewsSection } from "./_components/news-section";
 import { getNewsForInterests, getPopularNews } from "./_lib/news";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("real_name, department, grade, interest_tags")
+    .select("interest_tags")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -32,17 +32,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <AppShell
-      active="dashboard"
-      profile={{
-        id: user.id,
-        realName: profile?.real_name ?? null,
-        department: profile?.department ?? null,
-        grade: profile?.grade ?? null,
-        interestTags: interests,
-        email: user.email ?? null,
-      }}
-    >
+    <AuthenticatedAppShell active="dashboard">
       <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-10">
         {/* Chat unread badge removed from dashboard (duplicate with sidebar) */}
         <NewsSection
@@ -65,6 +55,6 @@ export default async function DashboardPage() {
           items={popularNews}
         />
       </div>
-    </AppShell>
+    </AuthenticatedAppShell>
   );
 }
