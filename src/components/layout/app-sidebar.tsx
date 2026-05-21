@@ -31,6 +31,7 @@ type Props = {
   active?: NavKey;
   className?: string;
   quickProjects?: Array<{ id: string; name: string; pinned?: boolean }>;
+  chatUnreadCount?: number;
 };
 
 const NAV_ITEMS: Array<{
@@ -47,7 +48,7 @@ const NAV_ITEMS: Array<{
   { key: "members", href: "/members", label: "メンバー検索", icon: Search },
 ];
 
-export function AppSidebar({ profile, active, className, quickProjects }: Props) {
+export function AppSidebar({ profile, active, className, quickProjects, chatUnreadCount = 0 }: Props) {
   return (
     <aside
       className={cn(
@@ -69,16 +70,17 @@ export function AppSidebar({ profile, active, className, quickProjects }: Props)
         <p className="mb-2 px-2 text-xs font-medium text-[var(--al-muted)]">
           一般
         </p>
-        {NAV_ITEMS.map((item) => (
-          <NavItem
-            key={item.key}
-            href={item.href}
-            icon={item.icon}
-            active={active === item.key}
-          >
-            {item.label}
-          </NavItem>
-        ))}
+              {NAV_ITEMS.map((item) => (
+                <NavItem
+                  key={item.key}
+                  href={item.href}
+                  icon={item.icon}
+                  active={active === item.key}
+                  badgeCount={item.key === "chat" ? chatUnreadCount : undefined}
+                >
+                  {item.label}
+                </NavItem>
+              ))}
         <NavItem
           href={`/u/${profile.id}`}
           icon={User}
@@ -139,12 +141,14 @@ function NavItem({
   active,
   disabled,
   children,
+  badgeCount,
 }: {
   href?: string;
   icon: LucideIcon;
   active?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
+  badgeCount?: number;
 }) {
   const base =
     "flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm transition-colors";
@@ -164,7 +168,14 @@ function NavItem({
         strokeWidth={1.75}
         aria-hidden
       />
-      <span>{children}</span>
+      <span className="flex items-center gap-2">
+        <span>{children}</span>
+        {badgeCount && badgeCount > 0 ? (
+          <span className="ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--al-accent)] px-2 text-xs font-semibold text-white">
+            {badgeCount > 99 ? "99+" : badgeCount}
+          </span>
+        ) : null}
+      </span>
     </>
   );
 

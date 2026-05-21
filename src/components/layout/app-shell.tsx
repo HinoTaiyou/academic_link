@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { AppSidebar, type SidebarProfile } from "@/components/layout/app-sidebar";
+import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   profile: SidebarProfile;
@@ -14,6 +15,7 @@ type Props = {
 
 export function AppShell({ profile, active, quickProjects, children }: Props) {
   const [open, setOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState<number>(0);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -29,6 +31,43 @@ export function AppShell({ profile, active, quickProjects, children }: Props) {
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  useEffect(() => {
+    // fetch unread count for chat and subscribe to message changes
+    const supabase = createClient();
+    let mounted = true;
+
+    async function refresh() {
+      try {
+        const res = await supabase
+          .from("messages")
+          .select("id", { count: "exact" })
+          .eq("to_id", profile.id)
+          .is("read_at", null);
+        if (mounted) setChatUnreadCount(res.count ?? 0);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    refresh();
+
+    const channel = supabase
+      .channel(`chat-unread-${profile.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages" },
+        () => {
+          refresh();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [profile.id]);
 
   return (
     <div className="al-page-mesh min-h-screen">
