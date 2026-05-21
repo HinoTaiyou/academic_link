@@ -1,6 +1,7 @@
 export type MemberProfileRow = {
   id: string;
   real_name: string | null;
+  student_number: string | null;
   department: string | null;
   grade: string | null;
   interest_tags: string[] | null;

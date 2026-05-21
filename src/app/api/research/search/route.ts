@@ -59,9 +59,6 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: message }, { status: 500 });
       }
     }
-
-    if (error) throw error;
-    return NextResponse.json({ data, count });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
