@@ -2,32 +2,25 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export function DeleteProjectFileButton({
+export function DeleteProjectButton({
   projectId,
-  fileId,
-  fileTitle,
-  targetType = "project_file",
+  projectName,
+  redirectTo = "/dashboard",
 }: {
   projectId: string;
-  fileId: string;
-  fileTitle: string;
-  targetType?: "project_file" | "research_post";
+  projectName: string;
+  redirectTo?: string;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [removed, setRemoved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (removed) return null;
-
   async function handleDelete() {
-    const label = fileTitle.trim() || "この資料";
+    const label = projectName.trim() || "このプロジェクト";
     if (
       !window.confirm(
-        `「${label}」を削除しますか？\n保存した PDF や要約も消え、元に戻せません。`,
+        `「${label}」を削除しますか？\n登録済みの資料・チャット・要約もすべて消え、元に戻せません。`,
       )
     ) {
       return;
@@ -36,19 +29,18 @@ export function DeleteProjectFileButton({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/projects/delete-file", {
+      const res = await fetch("/api/projects/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ projectId, fileId, targetType }),
+        body: JSON.stringify({ projectId }),
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!json.ok) {
         setError(json.error ?? "削除に失敗しました");
         return;
       }
-      setRemoved(true);
-      router.refresh();
+      window.location.assign(redirectTo);
     } catch {
       setError("ネットワークエラーが発生しました");
     } finally {
@@ -62,16 +54,16 @@ export function DeleteProjectFileButton({
         type="button"
         variant="ghost"
         size="sm"
-        className="h-7 gap-1 text-xs text-[var(--al-muted)] hover:text-destructive"
+        className="h-8 gap-1.5 text-xs text-[var(--al-muted)] hover:text-destructive"
         onClick={handleDelete}
         disabled={loading}
-        aria-label={`${fileTitle || "資料"}を削除`}
+        aria-label={`${projectName || "プロジェクト"}を削除`}
       >
         <Trash2 className="size-3.5" aria-hidden />
-        {loading ? "削除中…" : "削除"}
+        {loading ? "削除中…" : "プロジェクトを削除"}
       </Button>
       {error ? (
-        <p className="max-w-[14rem] text-right text-[11px] text-destructive">{error}</p>
+        <p className="max-w-[16rem] text-right text-[11px] text-destructive">{error}</p>
       ) : null}
     </div>
   );

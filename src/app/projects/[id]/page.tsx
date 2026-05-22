@@ -3,6 +3,7 @@ import { FileText, FolderOpen } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
 import { ResearchMaterialPanel } from "@/components/research/research-material-panel";
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { DeleteProjectFileButton } from "@/components/projects/delete-project-file-button";
 import ProjectEditModal from "@/components/projects/project-edit-modal";
 import FileActions from "@/components/projects/file-actions";
@@ -13,6 +14,8 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata = {
   title: "プロジェクト詳細 | Academic Link",
 };
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -232,12 +235,19 @@ export default async function ProjectDetailPage({ params }: Props) {
                   </div>
                 </div>
                 {isOwner ? (
-                  <Link
-                    href={`/research/new?projectId=${project.id}`}
-                    className="al-btn-outline shrink-0"
-                  >
-                    ＋ このプロジェクトに研究を追加
-                  </Link>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <Link
+                      href={`/research/new?projectId=${project.id}`}
+                      className="al-btn-outline"
+                    >
+                      ＋ このプロジェクトに研究を追加
+                    </Link>
+                    <DeleteProjectButton
+                      projectId={project.id}
+                      projectName={project.name}
+                      redirectTo={`/u/${user.id}`}
+                    />
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -338,6 +348,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                             projectId={project.id}
                             fileId={file.id}
                             fileTitle={file.title}
+                            targetType={file.actionTargetType}
                           />
                         ) : null}
                       </div>
