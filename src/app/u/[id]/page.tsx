@@ -124,13 +124,13 @@ export default async function UserProfilePage({ params }: Props) {
               {isMe ? (
                 <Link
                   href="/profile"
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[var(--al-border)] bg-white/90 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-[var(--al-ink)] shadow-sm transition hover:border-[color-mix(in_srgb,var(--al-accent)_40%,var(--al-border))] hover:bg-[var(--al-accent-soft)] active:scale-[0.98] sm:text-sm"
+                  className="inline-flex shrink-0 items-center gap-2.5 rounded-xl border border-[var(--al-border)] bg-white/90 py-2 pl-2 pr-4 text-sm font-semibold text-[var(--al-ink)] shadow-sm transition hover:border-[color-mix(in_srgb,var(--al-accent)_40%,var(--al-border))] hover:bg-[var(--al-accent-soft)] active:scale-[0.98]"
                 >
                   <span
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--al-accent-soft)] text-[var(--al-accent)]"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--al-accent-soft)] text-[var(--al-accent)]"
                     aria-hidden
                   >
-                    <Pencil className="h-4 w-4" strokeWidth={1.75} />
+                    <Pencil className="h-5 w-5" strokeWidth={1.75} />
                   </span>
                   編集する
                 </Link>
