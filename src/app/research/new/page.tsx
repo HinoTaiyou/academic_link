@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { FlaskConical } from "lucide-react";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { ResearchNewForm } from "./_components/research-new-form";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,7 +39,7 @@ export default async function NewResearchPage({ searchParams }: Props) {
 
   return (
     <AuthenticatedAppShell active="research">
-      <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 sm:px-6 sm:py-10">
+      <AppMain className="space-y-6">
         <header className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
             <div className="flex items-start gap-3">
@@ -66,7 +67,7 @@ export default async function NewResearchPage({ searchParams }: Props) {
           projects={projects}
           initialProjectId={activeProjectId}
         />
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

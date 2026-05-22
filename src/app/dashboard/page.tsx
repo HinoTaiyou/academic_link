@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { NewsSection } from "./_components/news-section";
 import { getNewsForInterests, getPopularNews } from "./_lib/news";
 import { createClient } from "@/lib/supabase/server";
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
 
   return (
     <AuthenticatedAppShell active="dashboard">
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-10">
+      <AppMain className="space-y-8">
         <NewsSection
           variant="interest"
           title="あなたの興味に基づくニュース"
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
           description="データサイエンス・プログラミングの最新情報をお届けします。"
           items={popularNews}
         />
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

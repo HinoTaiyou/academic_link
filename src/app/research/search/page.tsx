@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import ResearchSearch from "@/components/search/research-search";
 
 export const metadata = { title: "研究検索 | Academic Link" };
@@ -7,7 +8,7 @@ export const metadata = { title: "研究検索 | Academic Link" };
 export default async function SearchPage() {
   return (
     <AuthenticatedAppShell active="research_search">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <AppMain>
         <section className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
             <div className="flex items-start gap-3">
@@ -28,7 +29,7 @@ export default async function SearchPage() {
             <ResearchSearch />
           </div>
         </section>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

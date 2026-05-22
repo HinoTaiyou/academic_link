@@ -84,16 +84,19 @@ export function NewsSection({
               <NewsCard item={featured} featured />
             ) : null}
             {rest.length > 0 ? (
-              <div
+              <ul
                 className={cn(
-                  "grid gap-3",
+                  "grid list-none gap-3 p-0",
                   rest.length >= 2 ? "sm:grid-cols-2" : "grid-cols-1",
+                  "[grid-auto-rows:minmax(13.5rem,1fr)]",
                 )}
               >
                 {rest.map((item) => (
-                  <NewsCard key={item.url} item={item} />
+                  <li key={item.url} className="flex min-h-[13.5rem]">
+                    <NewsCard item={item} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : null}
           </div>
         )}

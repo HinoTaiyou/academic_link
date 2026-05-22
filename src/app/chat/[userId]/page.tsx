@@ -57,8 +57,8 @@ export default async function ChatRoomPage({ params }: Props) {
   return (
     <AuthenticatedAppShell active="chat">
       <div className="flex min-h-0 flex-1 flex-col bg-[var(--al-surface)]">
-        <header className="sticky top-0 z-10 border-b border-[var(--al-border)] bg-white/90 px-3 py-3 backdrop-blur sm:px-5">
-          <div className="mx-auto flex max-w-3xl items-center gap-3">
+        <header className="sticky top-0 z-10 border-b border-[var(--al-border)] bg-white/90 py-3 backdrop-blur">
+          <div className="al-app-main-inner flex items-center gap-3">
             <Link
               href="/chat"
               className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-[var(--al-muted)] transition hover:bg-[var(--al-surface)] hover:text-[var(--al-ink)]"

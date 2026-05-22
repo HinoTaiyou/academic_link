@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,7 +40,7 @@ export default async function ResearchPostPage({ params }: Props) {
 
   return (
     <AuthenticatedAppShell active="research">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <AppMain>
         <section className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
             <div className="min-w-0">
@@ -62,7 +63,7 @@ export default async function ResearchPostPage({ params }: Props) {
             </div>
           </div>
         </section>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

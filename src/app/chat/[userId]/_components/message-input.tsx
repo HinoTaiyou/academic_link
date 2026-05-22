@@ -85,9 +85,9 @@ export function MessageInput({ myId, partnerId, onMessageSent }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-[var(--al-border)] bg-white/95 px-3 py-3 backdrop-blur sm:px-5 sm:py-4"
+      className="border-t border-[var(--al-border)] bg-white/95 py-3 backdrop-blur sm:py-4"
     >
-      <div className="mx-auto flex max-w-3xl flex-col gap-2">
+      <div className="al-app-main-inner flex flex-col gap-2">
         {sendError ? (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
             {sendError}

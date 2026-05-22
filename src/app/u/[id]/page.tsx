@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FolderOpen, MessageSquare, Pencil } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { FollowButton } from "@/components/profile/follow-button";
 import { ProfileView } from "./_components/profile-view";
 import { ProjectDashboardBrowse } from "./_components/project-dashboard-browse";
@@ -89,8 +90,7 @@ export default async function UserProfilePage({ params }: Props) {
 
   return (
     <AuthenticatedAppShell active={isMe ? "profile" : undefined}>
-      <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 md:py-10">
-        <div className="mx-auto w-full max-w-3xl space-y-6">
+      <AppMain className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-xl font-bold text-[var(--al-ink)]">プロフィール</h1>
             <div className="flex gap-2">
@@ -194,8 +194,7 @@ export default async function UserProfilePage({ params }: Props) {
             </div>
           </section>
         )}
-        </div>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

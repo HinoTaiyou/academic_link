@@ -1,6 +1,7 @@
 import { FolderOpen } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { ProfileEditForm } from "./_components/profile-edit-form";
 import { ProjectDashboardSection } from "../dashboard/_components/project-dashboard-section";
 import {
@@ -55,8 +56,7 @@ export default async function ProfilePage() {
 
   return (
     <AuthenticatedAppShell active="profile">
-      <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 md:py-10">
-        <div className="mx-auto w-full max-w-3xl space-y-6">
+      <AppMain className="space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-[var(--al-ink)]">
@@ -108,8 +108,7 @@ export default async function ProfilePage() {
               />
             </div>
           </section>
-        </div>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

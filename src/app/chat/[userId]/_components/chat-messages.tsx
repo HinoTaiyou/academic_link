@@ -96,8 +96,8 @@ export function ChatMessages({ myId, partnerId, initialMessages }: Props) {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto px-3 py-5 sm:px-5">
-        <div className="mx-auto max-w-3xl space-y-3">
+      <div className="flex-1 overflow-y-auto py-5">
+        <div className="al-app-main-inner space-y-3">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--al-border)] bg-white/80 px-6 py-14 text-center">
               <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--al-accent-soft)] text-[var(--al-accent)]">

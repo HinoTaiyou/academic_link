@@ -10,6 +10,7 @@ type Props = {
 export function NewsCard({ item, featured = false }: Props) {
   const titleText = normalizeNewsPlainText(item.title);
   const snippet = normalizeNewsPlainText(item.description);
+  const displaySnippet = snippet || "\u00a0";
 
   return (
     <a
@@ -17,9 +18,9 @@ export function NewsCard({ item, featured = false }: Props) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "group relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--al-border)] bg-white transition-all",
+        "group relative flex h-full w-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--al-border)] bg-white transition-all",
         "hover:border-[color-mix(in_srgb,var(--al-accent)_35%,var(--al-border))] hover:shadow-[0_8px_28px_-8px_rgba(201,107,74,0.15)]",
-        featured ? "sm:flex-row sm:gap-0" : "",
+        featured ? "min-h-[9.5rem] sm:min-h-[9rem] sm:flex-row sm:gap-0" : "min-h-[13.5rem]",
       )}
     >
       <span
@@ -44,23 +45,23 @@ export function NewsCard({ item, featured = false }: Props) {
 
         <h3
           className={cn(
-            "line-clamp-3 font-semibold leading-snug text-[var(--al-ink)] transition-colors group-hover:text-[var(--al-accent)]",
-            featured ? "text-base sm:text-lg" : "text-sm",
+            "line-clamp-3 min-h-[3.75rem] font-semibold leading-snug text-[var(--al-ink)] transition-colors group-hover:text-[var(--al-accent)]",
+            featured ? "text-base sm:text-lg sm:min-h-[4.25rem]" : "text-sm",
           )}
         >
           {titleText}
         </h3>
 
-        {snippet ? (
-          <p
-            className={cn(
-              "line-clamp-3 leading-relaxed text-[var(--al-muted)]",
-              featured ? "text-sm" : "text-xs",
-            )}
-          >
-            {snippet}
-          </p>
-        ) : null}
+        <p
+          className={cn(
+            "line-clamp-3 min-h-[3.75rem] leading-relaxed text-[var(--al-muted)]",
+            featured ? "text-sm" : "text-xs",
+            !snippet && "text-transparent select-none",
+          )}
+          aria-hidden={!snippet}
+        >
+          {displaySnippet}
+        </p>
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
           <div className="flex min-w-0 flex-wrap gap-1.5">

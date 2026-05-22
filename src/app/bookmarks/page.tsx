@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import BookmarkTabs from "@/components/bookmarks/bookmark-tabs";
 
 export const metadata = { title: "ブックマーク | Academic Link" };
@@ -87,7 +88,7 @@ export default async function BookmarksPage() {
 
   return (
     <AuthenticatedAppShell active="bookmarks">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <AppMain>
         <section className="al-glass-card overflow-hidden">
           <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
             <div className="flex items-start gap-3">
@@ -102,7 +103,7 @@ export default async function BookmarksPage() {
             <BookmarkTabs profiles={profiles} projects={projects} files={files} />
           </div>
         </section>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

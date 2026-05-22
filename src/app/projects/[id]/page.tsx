@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FileText, FolderOpen } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { ResearchMaterialPanel } from "@/components/research/research-material-panel";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { DeleteProjectFileButton } from "@/components/projects/delete-project-file-button";
@@ -218,8 +219,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return (
     <AuthenticatedAppShell active="profile">
-      <div className="flex flex-1 flex-col px-4 py-8 sm:px-6 md:py-10">
-        <div className="mx-auto w-full max-w-4xl space-y-6">
+      <AppMain className="space-y-6">
           <section className="al-glass-card overflow-hidden">
             <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -388,8 +388,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           )}
             </div>
           </section>
-        </div>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }

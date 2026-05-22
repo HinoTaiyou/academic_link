@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageSquare, Users } from "lucide-react";
 import { AuthenticatedAppShell } from "@/components/layout/authenticated-app-shell";
+import { AppMain } from "@/components/layout/app-main";
 import { createClient } from "@/lib/supabase/server";
 import { ConversationItem } from "./_components/conversation-item";
 import { getConversations } from "./_lib/queries";
@@ -22,7 +23,7 @@ export default async function ChatPage() {
 
   return (
     <AuthenticatedAppShell active="chat">
-      <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 sm:px-6 sm:py-10">
+      <AppMain className="space-y-6">
         <header className="al-glass-card overflow-hidden">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
             <div className="flex min-w-0 items-start gap-3">
@@ -83,7 +84,7 @@ export default async function ChatPage() {
             )}
           </div>
         </header>
-      </div>
+      </AppMain>
     </AuthenticatedAppShell>
   );
 }
