@@ -18,7 +18,7 @@ export default async function SearchPage() {
                 <p className="al-section-eyebrow">Research</p>
                 <h1 className="mt-1 text-lg font-semibold tracking-tight text-[var(--al-ink)] sm:text-xl">研究検索</h1>
                 <p className="mt-1 text-sm leading-relaxed text-[var(--al-muted)]">
-                  キーワードで研究投稿を検索します。キーワードを入力して検索してください。
+                  キーワードで研究投稿とプロジェクトを検索します。キーワードを入力して検索してください。
                 </p>
               </div>
             </div>

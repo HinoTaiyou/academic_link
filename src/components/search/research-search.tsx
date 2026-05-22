@@ -4,12 +4,29 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-type Post = { id: string; title: string; summary: string | null; created_at: string };
+type ResearchPost = {
+  id: string;
+  title: string;
+  summary: string | null;
+  created_at: string;
+};
+
+type ProjectResult = {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+};
+
+type SearchResults = {
+  researchPosts: ResearchPost[];
+  projects: ProjectResult[];
+};
 
 export default function ResearchSearch() {
   const [q, setQ] = useState("");
   const [randSearchName] = useState(() => "research_q_" + Math.random().toString(36).slice(2, 8));
-  const [results, setResults] = useState<Post[] | null>(null);
+  const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
 
@@ -19,10 +36,13 @@ export default function ResearchSearch() {
     try {
       const res = await fetch(`/api/research/search?q=${encodeURIComponent(q)}&page=${page}`);
       const json = await res.json();
-      setResults(json.data ?? []);
+      setResults({
+        researchPosts: json.researchPosts ?? [],
+        projects: json.projects ?? [],
+      });
     } catch (err) {
       console.error(err);
-      setResults([]);
+      setResults({ researchPosts: [], projects: [] });
     } finally {
       setLoading(false);
     }
@@ -59,22 +79,65 @@ export default function ResearchSearch() {
       <div className="mt-4">
         {results === null ? (
           <p className="text-sm text-gray-500">キーワードを入力して検索してください</p>
-        ) : results.length === 0 ? (
-          <p className="text-sm text-gray-500">結果がありません</p>
         ) : (
-          <ul className="space-y-3">
-            {results.map((r) => (
-              <li key={r.id} className="p-3 border rounded">
+          <div className="space-y-6">
+            <ResultSection
+              title="研究投稿"
+              emptyMessage="研究投稿の結果がありません"
+              items={results.researchPosts}
+              renderItem={(r) => (
                 <Link href={`/research/${r.id}`} className="block">
                   <h3 className="font-semibold text-[var(--al-ink)]">{r.title}</h3>
                   <p className="text-sm text-[var(--al-muted)]">{r.summary}</p>
                   <div className="text-xs text-[var(--al-muted)]">{new Date(r.created_at).toLocaleString()}</div>
                 </Link>
-              </li>
-            ))}
-          </ul>
+              )}
+            />
+
+            <ResultSection
+              title="プロジェクト"
+              emptyMessage="プロジェクトの結果がありません"
+              items={results.projects}
+              renderItem={(p) => (
+                <Link href={`/projects/${p.id}`} className="block">
+                  <h3 className="font-semibold text-[var(--al-ink)]">{p.name}</h3>
+                  <p className="text-sm text-[var(--al-muted)]">{p.description}</p>
+                  <div className="text-xs text-[var(--al-muted)]">{new Date(p.created_at).toLocaleString()}</div>
+                </Link>
+              )}
+            />
+          </div>
         )}
       </div>
     </div>
+  );
+}
+
+function ResultSection<T>({
+  title,
+  emptyMessage,
+  items,
+  renderItem,
+}: {
+  title: string;
+  emptyMessage: string;
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+}) {
+  return (
+    <section className="space-y-2">
+      <h2 className="text-sm font-semibold text-[var(--al-ink)]">{title}</h2>
+      {items.length === 0 ? (
+        <p className="text-sm text-gray-500">{emptyMessage}</p>
+      ) : (
+        <ul className="space-y-3">
+          {items.map((item, index) => (
+            <li key={index} className="rounded border p-3">
+              {renderItem(item)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
