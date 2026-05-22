@@ -1,5 +1,5 @@
-import { FlaskConical, Sparkles } from "lucide-react";
-import { DefaultAvatar } from "@/components/profile/default-avatar";
+import { FlaskConical, Sparkles, User } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type ProfileViewModel = {
@@ -15,31 +15,48 @@ type Props = {
   profile: ProfileViewModel;
   className?: string;
   showId?: boolean;
+  headerActions?: ReactNode;
 };
 
-export function ProfileView({ profile, className, showId = false }: Props) {
+export function ProfileView({
+  profile,
+  className,
+  showId = false,
+  headerActions,
+}: Props) {
   const displayName = profile.realName?.trim() || "（名前未設定）";
   const sub = [profile.department, profile.grade].filter(Boolean).join(" · ");
 
   return (
     <section className={cn("al-glass-card overflow-hidden", className)}>
       <div className="border-b border-[var(--al-border)] bg-[linear-gradient(135deg,var(--al-accent-soft)_0%,#fff_55%)] px-5 py-4 sm:px-6 sm:py-5">
-        <div className="flex items-start gap-4">
-          <DefaultAvatar className="h-14 w-14 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="al-section-eyebrow">Profile</p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-[var(--al-ink)]">
-              {displayName}
-            </h2>
-            {sub ? (
-              <p className="mt-1 text-sm text-[var(--al-muted)]">{sub}</p>
-            ) : null}
-            {showId ? (
-              <p className="mt-1 font-mono text-[10px] text-[var(--al-muted)]">
-                ID: {profile.id.slice(0, 8)}
-              </p>
-            ) : null}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--al-accent)] shadow-sm ring-1 ring-[var(--al-border)]">
+              <User className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="al-section-eyebrow">Profile</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--al-ink)]">
+                {displayName}
+              </h2>
+              {sub ? (
+                <p className="mt-1 text-sm leading-relaxed text-[var(--al-muted)]">
+                  {sub}
+                </p>
+              ) : null}
+              {showId ? (
+                <p className="mt-1 font-mono text-[10px] text-[var(--al-muted)]">
+                  ID: {profile.id.slice(0, 8)}
+                </p>
+              ) : null}
+            </div>
           </div>
+          {headerActions ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {headerActions}
+            </div>
+          ) : null}
         </div>
       </div>
 
